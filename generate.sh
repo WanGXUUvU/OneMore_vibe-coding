@@ -63,7 +63,9 @@ read -r -d '' WORKFLOW_RULES_TEMPLATE << 'EOF' || true
 - 如果 `STATUS.md` 中有活跃的 Goal，必须自动整理进度向用户发送状态报告，并询问如何继续，以实现无缝恢复续跑。
 
 ### 2. 核心工作流流转 (Workflow Execution)
-AI 必须根据当前任务是否使用任务卡，进入对应的闭环流转流程：
+AI 必须根据当前任务，选择对应的流程运行：
+- **头脑风暴流 (TASK-000 Brainstorm)**:
+  `AI 开启对话 -> 交互式分步引导 (每次仅追问 1-3 个具体问题) -> 增量保存至 specs/TASK-000.md -> 对齐 8 项内容并规划里程碑 (如有) -> 提请确认并停在 Brainstorm Review 关卡 -> 等待用户授权建卡 (create-task)`
 - **建卡开发流 (With Task Card)**:
   `建卡 (根据 specs/TASK-card.md 创建) -> 编码实现 -> 运行测试验证 -> [若测试失败] 修复代码并重新测试 -> [测试通过] 记录 STATUS.md Change Log 并重置状态 -> 询问用户下一个任务是否需要建立任务卡`
 - **直接执行流 (Without Task Card)**:
@@ -74,7 +76,7 @@ AI 必须根据当前任务是否使用任务卡，进入对应的闭环流转�
 - **状态行为边界**：严格遵守 `STATUS.md` 中的 Status 指引：
   - `planning`：仅限需求与规划，禁止改码。
   - `coding`：允许修改代码与执行本地验证。
-  - `waiting-review`：暂停修改代码，等待用户反馈。
+  - `waiting-review`：暂停修改代码，等待用户反馈.
   - `None`：无活跃任务。
 - **归档闭环**：代码通过验证后，在 `STATUS.md` 的 `Change Log` 中追加修改记录（日期、目标、修改文件、备注）。若根目录下存在 `BUILD_PLAN.md`，同步更新其里程碑进度。更新 `STATUS.md` 将 Goal 设为 `None`，Status 设为 `None`，并在完成归档后，必须主动询问用户下一个任务是否需要建立任务卡。
 
@@ -163,9 +165,10 @@ echo -e "    ${BOLD}1)${RESET}  Claude Code  ${DIM}(CLAUDE.md)${RESET}"
 echo -e "    ${BOLD}2)${RESET}  GitHub Copilot  ${DIM}(.github/copilot-instructions.md)${RESET}"
 echo -e "    ${BOLD}3)${RESET}  Codex  ${DIM}(AGENTS.md)${RESET}"
 echo -e "    ${BOLD}4)${RESET}  CodeBuddy  ${DIM}(CODEBUDDY.md)${RESET}"
+echo -e "    ${BOLD}5)${RESET}  Gemini / Antigravity  ${DIM}(.agents/AGENTS.md)${RESET}"
 echo -e "    ${BOLD}0)${RESET}  暂不初始化项目文件  ${DIM}(仅进行 Skill 安装)${RESET}"
 
-ask init_choice "请输入编号 [0-4]："
+ask init_choice "请输入编号 [0-5]："
 
 CFG_FILE=""
 CFG_HEADER=""
@@ -175,6 +178,7 @@ case "$init_choice" in
   2) CFG_FILE=".github/copilot-instructions.md"; CFG_HEADER="# Copilot Instructions" ;;
   3) CFG_FILE="AGENTS.md"; CFG_HEADER="# AGENTS.md" ;;
   4) CFG_FILE="CODEBUDDY.md"; CFG_HEADER="# CODEBUDDY.md" ;;
+  5) CFG_FILE=".agents/AGENTS.md"; CFG_HEADER="# AGENTS.md" ;;
   0|*) CFG_FILE="" ;;
 esac
 
@@ -262,10 +266,11 @@ echo -e "    ${BOLD}1)${RESET}  安装到 Claude Code 目录"
 echo -e "    ${BOLD}2)${RESET}  安装到 GitHub Copilot 目录"
 echo -e "    ${BOLD}3)${RESET}  安装到 Codex 目录"
 echo -e "    ${BOLD}4)${RESET}  安装到 CodeBuddy 目录"
-echo -e "    ${BOLD}5)${RESET}  安装到全部平台"
+echo -e "    ${BOLD}5)${RESET}  安装到 Gemini / Antigravity 目录"
+echo -e "    ${BOLD}6)${RESET}  安装到全部平台"
 echo -e "    ${BOLD}0)${RESET}  暂不安装技能"
 
-ask skill_choice "请输入编号 [0-5]："
+ask skill_choice "请输入编号 [0-6]："
 
 FILTER=""
 case "$skill_choice" in
@@ -273,7 +278,8 @@ case "$skill_choice" in
   2) FILTER="copilot" ;;
   3) FILTER="codex" ;;
   4) FILTER="codebuddy" ;;
-  5) FILTER="all" ;;
+  5) FILTER="gemini" ;;
+  6) FILTER="all" ;;
   0|*) FILTER="" ;;
 esac
 
@@ -294,12 +300,14 @@ if [[ "$scope_choice" -eq 2 ]]; then
   claude_dest="$project_base/.claude/skills"
   codex_dest="$project_base/.codex/skills"
   codebuddy_dest="$project_base/.codebuddy/skills"
+  gemini_dest="$project_base/.agents/skills"
   scope_name="项目级"
 else
   copilot_dest="$HOME/.copilot/skills"
   claude_dest="$HOME/.claude/skills"
   codex_dest="$HOME/.codex/skills"
   codebuddy_dest="$HOME/.codebuddy/skills"
+  gemini_dest="$HOME/.gemini/config/skills"
   scope_name="用户级"
 fi
 
@@ -341,6 +349,10 @@ if [[ -n "$FILTER" ]]; then
 
   if [[ "$FILTER" == "all" || "$FILTER" == "codebuddy" ]]; then
     install_to_platform "codebuddy" "$codebuddy_dest" "请重启 CodeBuddy 插件使 skill 生效"
+  fi
+
+  if [[ "$FILTER" == "all" || "$FILTER" == "gemini" ]]; then
+    install_to_platform "gemini" "$gemini_dest" "请重启 /reload 以使 Gemini/Antigravity skill 生效"
   fi
 fi
 

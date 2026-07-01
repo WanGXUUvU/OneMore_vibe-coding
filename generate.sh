@@ -163,12 +163,11 @@ echo ""
 echo -e "  选择为当前项目初始化的专属配置文件类型："
 echo -e "    ${BOLD}1)${RESET}  Claude Code  ${DIM}(CLAUDE.md)${RESET}"
 echo -e "    ${BOLD}2)${RESET}  GitHub Copilot  ${DIM}(.github/copilot-instructions.md)${RESET}"
-echo -e "    ${BOLD}3)${RESET}  Codex  ${DIM}(AGENTS.md)${RESET}"
+echo -e "    ${BOLD}3)${RESET}  Codex / Gemini  ${DIM}(AGENTS.md)${RESET}"
 echo -e "    ${BOLD}4)${RESET}  CodeBuddy  ${DIM}(CODEBUDDY.md)${RESET}"
-echo -e "    ${BOLD}5)${RESET}  Gemini / Antigravity  ${DIM}(.agents/AGENTS.md)${RESET}"
 echo -e "    ${BOLD}0)${RESET}  暂不初始化项目文件  ${DIM}(仅进行 Skill 安装)${RESET}"
 
-ask init_choice "请输入编号 [0-5]："
+ask init_choice "请输入编号 [0-4]："
 
 CFG_FILE=""
 CFG_HEADER=""
@@ -178,7 +177,6 @@ case "$init_choice" in
   2) CFG_FILE=".github/copilot-instructions.md"; CFG_HEADER="# Copilot Instructions" ;;
   3) CFG_FILE="AGENTS.md"; CFG_HEADER="# AGENTS.md" ;;
   4) CFG_FILE="CODEBUDDY.md"; CFG_HEADER="# CODEBUDDY.md" ;;
-  5) CFG_FILE=".agents/AGENTS.md"; CFG_HEADER="# AGENTS.md" ;;
   0|*) CFG_FILE="" ;;
 esac
 

@@ -1,6 +1,0 @@
----
-name: "{{SKILL_FULL}}"
-description: "触发场景：{{PLATFORM_NAME}} 原生完整项目工作流、标准化流程、完整交付闭环、Brainstorm/Plan/Sync 人工关卡；触发词：启动流程、继续流程、标准化流程、完整工作流、TASK-000、TASK-001、Brainstorm Review、Plan Review、Sync Review、Verify、Review；使用 {{PLATFORM_NAME}} 原生完整工作流管理仓库时必须触发"
-when_to_use: "触发词：启动流程、继续流程、标准化流程、完整工作流、TASK-000、TASK-001、Brainstorm Review、Plan Review、Sync Review、Verify、Review。适用于跨多文件、多模块或多里程碑的工作，需要明确人工关卡时使用。"
-allowed-tools: Read Write Bash Grep
----

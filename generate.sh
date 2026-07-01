@@ -1,55 +1,11 @@
 #!/usr/bin/env bash
-# generate.sh — 从 core-template 生成各平台 skill 文件（对话式菜单）
+# generate.sh — 初始化项目工作流文件并安装 minipower 技能（一键式安装器）
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-TEMPLATE_DIR="$SCRIPT_DIR/core-template"
-OUTPUT_DIR="$SCRIPT_DIR/_internal/agent-skills"
+SKILL_SRC="$SCRIPT_DIR/minipower"
 VERSION="$(date +%Y-%m-%d)"
-
-DRY_RUN=false
-DO_INSTALL=false
-INSTALL_SCOPE="user"   # user = 用户级，project = 项目级
-FILTER=""
-LANG_SUFFIX=""   # 空 = 英文，.zh = 中文
-
-# ─────────────────────────────────────────────
-# 非交互 CLI 参数解析
-# ─────────────────────────────────────────────
-usage() {
-  cat <<EOF
-用法: generate.sh [选项]
-
-选项:
-  --platform <id>   平台：all | copilot | claude | codex | codebuddy  (默认: all)
-  --lang <lang>     语言：en | zh  (默认: en)
-  --install <scope> 安装范围：user | project  (默认: 不安装)
-  --dry-run         仅预览，不写入文件
-  --help            显示此帮助
-
-示例:
-  generate.sh --platform claude --lang zh --install user
-  generate.sh --platform copilot --dry-run
-EOF
-  exit 0
-}
-
-NON_INTERACTIVE=false
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --help|-h)     usage ;;
-    --dry-run)     DRY_RUN=true; NON_INTERACTIVE=true; shift ;;
-    --platform)    FILTER="$2"; [[ "$FILTER" == "all" ]] && FILTER=""; NON_INTERACTIVE=true; shift 2 ;;
-    --lang)        [[ "$2" == "zh" ]] && LANG_SUFFIX=".zh" || LANG_SUFFIX=""; NON_INTERACTIVE=true; shift 2 ;;
-    --install)     DO_INSTALL=true; INSTALL_SCOPE="$2"; NON_INTERACTIVE=true; shift 2 ;;
-    *) echo -e "未知参数: $1\n"; usage ;;
-  esac
-done
-
-if $NON_INTERACTIVE; then
-  mkdir -p "$OUTPUT_DIR"
-fi
 
 # ─────────────────────────────────────────────
 # 颜色 & 样式
@@ -68,441 +24,312 @@ ok()   { echo -e "  ${GREEN}✓${RESET}  $*"; }
 info() { echo -e "  ${CYAN}ℹ${RESET}  $*"; }
 warn() { echo -e "  ${YELLOW}⚠${RESET}  $*"; }
 step() { echo -e "\n${BOLD}${BLUE}  $*${RESET}"; }
-dry()  { echo -e "  ${DIM}[dry]${RESET} $*"; }
-
-separator() {
-  echo -e "\n${DIM}  ────────────────────────────────────${RESET}"
-}
+separator() { echo -e "\n${DIM}  ────────────────────────────────────${RESET}"; }
 
 ask() {
   local var="$1"
   local prompt="$2"
   echo -e ""
   printf "  ${BOLD}❯${RESET} ${prompt} "
-  read -r "$var" < /dev/tty
+  if [ -t 0 ]; then
+    read -r "$var" < /dev/tty
+  else
+    read -r "$var"
+  fi
 }
 
-# ─────────────────────────────────────────────
-# 非交互模式：跳过问答直接执行
-# ─────────────────────────────────────────────
-if $NON_INTERACTIVE; then
-  # 跳过所有交互步骤，直接跳到生成
-  true
-fi
-
-# ─────────────────────────────────────────────
-# 头部 Banner
-# ─────────────────────────────────────────────
 print_header() {
   if [[ -t 1 && -n "${TERM:-}" ]]; then clear; fi
   echo ""
   echo -e "  ${BOLD}${CYAN}╔══════════════════════════════════════════╗${RESET}"
-  echo -e "  ${BOLD}${CYAN}║${RESET}  ${BOLD}🛠  Agent Skill 生成器${RESET}  ${DIM}v${VERSION}${RESET}  ${BOLD}${CYAN}║${RESET}"
+  echo -e "  ${BOLD}${CYAN}║${RESET}  ${BOLD}🛠  minipower 一键安装与初始化器${RESET}  ${DIM}v${VERSION}${RESET}  ${BOLD}${CYAN}║${RESET}"
   echo -e "  ${BOLD}${CYAN}╚══════════════════════════════════════════╝${RESET}"
   echo ""
 }
-$NON_INTERACTIVE || print_header
+
+print_header
 
 # ─────────────────────────────────────────────
-# 步骤 1 — 语言（非交互模式跳过）
+# 内置模板定义 (Heredocs)
 # ─────────────────────────────────────────────
-if $NON_INTERACTIVE; then
-  true
-else
+
+# 1. 极简工作流默认约束
+read -r -d '' WORKFLOW_RULES_TEMPLATE << 'EOF' || true
+
+## Workflow Defaults (Minipower)
+
+### 1. 启动与会话恢复 (Startup & Continuation)
+- 每次新对话启动或切换 Agent 时，首要读取本文件、`STATUS.md`、当前任务卡（如有）以及 `BUILD_PLAN.md`（如有）。
+- 如果 `STATUS.md` 中有活跃的 Goal，必须自动整理进度向用户发送状态报告，并询问如何继续，以实现无缝恢复续跑。
+
+### 2. 核心工作流流转 (Workflow Execution)
+AI 必须根据当前任务是否使用任务卡，进入对应的闭环流转流程：
+- **建卡开发流 (With Task Card)**:
+  `建卡 (根据 specs/TASK-card.md 创建) -> 编码实现 -> 运行测试验证 -> [若测试失败] 修复代码并重新测试 -> [测试通过] 记录 STATUS.md Change Log 并重置状态 -> 询问用户下一个任务是否需要建立任务卡`
+- **直接执行流 (Without Task Card)**:
+  `直接修改代码 -> 运行测试验证 -> [若测试失败] 修复代码并重新测试 -> [测试通过] 记录 STATUS.md Change Log 并重置状态 -> 询问用户下一个任务是否需要建立任务卡`
+
+### 3. 状态与归档规则 (Status & Archiving Rules)
+- **卡片管理**：默认不建立任务卡。只有收到明确建卡授权（如 `create-task`）时才在 `specs/` 目录下建卡。
+- **状态行为边界**：严格遵守 `STATUS.md` 中的 Status 指引：
+  - `planning`：仅限需求与规划，禁止改码。
+  - `coding`：允许修改代码与执行本地验证。
+  - `waiting-review`：暂停修改代码，等待用户反馈。
+  - `None`：无活跃任务。
+- **归档闭环**：代码通过验证后，在 `STATUS.md` 的 `Change Log` 中追加修改记录（日期、目标、修改文件、备注）。若根目录下存在 `BUILD_PLAN.md`，同步更新其里程碑进度。更新 `STATUS.md` 将 Goal 设为 `None`，Status 设为 `None`，并在完成归档后，必须主动询问用户下一个任务是否需要建立任务卡。
+
+### 4. 状态报告格式 (Status Reporting)
+- 当用户提问“现在到哪了”或会话启动时，必须清晰报告以下 4 项：
+  1. **Goal** — 当前目标任务卡
+  2. **Status** — 当前状态
+  3. **Next Action** — 下一步行动
+  4. **Latest Change Log** — 最近修改记录
+EOF
+
+# 2. STATUS.md 模板
+read -r -d '' STATUS_TEMPLATE << 'EOF' || true
+# STATUS
+
+## Current Status
+- **Goal**: specs/TASK-000.md
+- **Status**: planning  # [planning | coding | waiting-review | None]
+- **Next Action**: 开启头脑风暴，对齐需求
+
+## Change Log (修改历史记录)
+| Date | Goal / Task | Files Modified | Status | Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| — | — | — | — | — |
+EOF
+
+# 3. TASK-000.md 模板
+read -r -d '' TASK_000_TEMPLATE << 'EOF' || true
+# TASK-000: 头脑风暴与需求对齐
+
+## 1. 项目名称 + 目标
+- 
+
+## 2. User Roles & Use Cases (用户角色与使用场景)
+- 
+
+## 3. Core Pages / Flows (核心页面与主流程)
+- 
+
+## 4. In Scope (首版范围)
+- 
+
+## 5. Out of Scope (明确不做)
+- 
+
+## 6. Technical Direction & Key Dependencies (技术方向与关键依赖)
+- 
+
+## 7. Risks / Open Questions (风险与待确认问题)
+- 
+
+## 8. Done when (最终验收标准)
+- [ ] 
+EOF
+
+# 4. TASK-card.md 模板
+read -r -d '' TASK_CARD_TEMPLATE << 'EOF' || true
+# TASK-xxx: [任务简短标题]
+
+## 1. 任务背景与目标
+- [简述本张任务卡要解决什么问题]
+
+## 2. 需求与边界
+- **In Scope (要做)**:
+  - [ ] 
+- **Out of Scope (不做)**:
+  - [ ] 
+
+## 3. 实现计划 (Todo List)
+- [ ] 
+
+## 4. 验证与评审 (Done when)
+- **Verify Plan**: [如何进行本地验证，例：运行 npm run test]
+- **Review Report**: [开发完成后，AI 在此填写实际修改点和自审结果]
+EOF
+
+
+# ─────────────────────────────────────────────
+# 步骤 1 — 初始化当前项目文件
+# ─────────────────────────────────────────────
 separator
-step "步骤 1 / 4  —  🌐  选择语言"
+step "步骤 1 / 2  —  📁  初始化项目治理文件 (根目录)"
 echo ""
-echo -e "    ${BOLD}1)${RESET}  🇺🇸  English（英文）"
-echo -e "    ${BOLD}2)${RESET}  🇨🇳  中文"
-echo -e "    ${DIM}0)  退出${RESET}"
+echo -e "  选择为当前项目初始化的专属配置文件类型："
+echo -e "    ${BOLD}1)${RESET}  🔶  Claude Code  ${DIM}(CLAUDE.md)${RESET}"
+echo -e "    ${BOLD}2)${RESET}  🐙  GitHub Copilot  ${DIM}(.github/copilot-instructions.md)${RESET}"
+echo -e "    ${BOLD}3)${RESET}  ✦   Codex  ${DIM}(AGENTS.md)${RESET}"
+echo -e "    ${BOLD}4)${RESET}  💻  CodeBuddy  ${DIM}(CODEBUDDY.md)${RESET}"
+echo -e "    ${BOLD}0)${RESET}  暂不初始化项目文件  ${DIM}(仅进行全局 Skill 安装)${RESET}"
 
-ask lang_choice "请输入编号 [0-2]："
-case "$lang_choice" in
-  0) echo -e "\n  ${DIM}已退出。${RESET}\n"; exit 0 ;;
-  1) LANG_SUFFIX="" ;;
-  2) LANG_SUFFIX=".zh" ;;
-  *)
-    echo -e "\n  ${RED}✗${RESET}  无效选项，退出。\n"
-    exit 1 ;;
+ask init_choice "请输入编号 [0-4]："
+
+CFG_FILE=""
+CFG_HEADER=""
+
+case "$init_choice" in
+  1) CFG_FILE="CLAUDE.md"; CFG_HEADER="# CLAUDE.md" ;;
+  2) CFG_FILE=".github/copilot-instructions.md"; CFG_HEADER="# Copilot Instructions" ;;
+  3) CFG_FILE="AGENTS.md"; CFG_HEADER="# AGENTS.md" ;;
+  4) CFG_FILE="CODEBUDDY.md"; CFG_HEADER="# CODEBUDDY.md" ;;
+  0|*) CFG_FILE="" ;;
 esac
-fi  # end non-interactive skip for step 1
+
+project_base="${CALLER_DIR:-$PWD}"
+
+if [[ -n "$CFG_FILE" ]]; then
+  # 1. 写入/追加配置文件
+  target_cfg_path="$project_base/$CFG_FILE"
+  mkdir -p "$(dirname "$target_cfg_path")"
+  
+  if [[ -f "$target_cfg_path" ]]; then
+    echo -e "\n  ${YELLOW}⚠${RESET}  检测到当前项目下已存在 ${BOLD}$CFG_FILE${RESET}"
+    echo -e "    ${BOLD}1)${RESET}  追加工作流约束到文件末尾 (Append)"
+    echo -e "    ${BOLD}2)${RESET}  覆盖替换整个文件 (Overwrite)"
+    echo -e "    ${BOLD}0)${RESET}  跳过此文件"
+    ask cfg_action "请输入编号 [0-2]："
+    
+    case "$cfg_action" in
+      1)
+        if grep -q "Workflow Defaults (Minipower)" "$target_cfg_path"; then
+          warn "文件中已包含 Minipower 规则，跳过追加。"
+        else
+          echo -e "\n$WORKFLOW_RULES_TEMPLATE" >> "$target_cfg_path"
+          ok "已成功追加约束到 $CFG_FILE 末尾"
+        fi
+        ;;
+      2)
+        echo -e "$CFG_HEADER\n$WORKFLOW_RULES_TEMPLATE" > "$target_cfg_path"
+        ok "已成功覆盖并重新创建 $CFG_FILE"
+        ;;
+      *)
+        info "跳过修改 $CFG_FILE"
+        ;;
+    esac
+  else
+    echo -e "$CFG_HEADER\n$WORKFLOW_RULES_TEMPLATE" > "$target_cfg_path"
+    ok "已成功创建 $CFG_FILE 并写入约束"
+  fi
+
+  # 2. 写入 STATUS.md
+  target_status_path="$project_base/STATUS.md"
+  write_status=true
+  if [[ -f "$target_status_path" ]]; then
+    echo -e "\n  ${YELLOW}⚠${RESET}  检测到已存在 ${BOLD}STATUS.md${RESET}"
+    echo -e "    ${BOLD}1)${RESET}  覆盖重置 STATUS.md (Overwrite)"
+    echo -e "    ${BOLD}0)${RESET}  保留现有 STATUS.md"
+    ask status_action "请输入编号 [0-1]："
+    [[ "$status_action" != "1" ]] && write_status=false
+  fi
+  
+  if $write_status; then
+    echo "$STATUS_TEMPLATE" > "$target_status_path"
+    ok "已初始化 STATUS.md"
+  else
+    info "保留原有 STATUS.md"
+  fi
+
+  # 3. 创建 specs 模板
+  mkdir -p "$project_base/specs"
+  
+  if [[ ! -f "$project_base/specs/TASK-000.md" ]]; then
+    echo "$TASK_000_TEMPLATE" > "$project_base/specs/TASK-000.md"
+    ok "已创建 specs/TASK-000.md 模板"
+  else
+    info "specs/TASK-000.md 已存在，跳过"
+  fi
+
+  if [[ ! -f "$project_base/specs/TASK-card.md" ]]; then
+    echo "$TASK_CARD_TEMPLATE" > "$project_base/specs/TASK-card.md"
+    ok "已创建 specs/TASK-card.md 模板"
+  else
+    info "specs/TASK-card.md 已存在，跳过"
+  fi
+fi
 
 # ─────────────────────────────────────────────
-# 步骤 2 — 平台（非交互模式跳过）
+# 步骤 2 — 全局 Skill 安装
 # ─────────────────────────────────────────────
-if $NON_INTERACTIVE; then
-  true
-else
 print_header
 separator
-step "步骤 2 / 4  —  🤖  选择平台"
+step "步骤 2 / 2  —  📦  安装全局 Skill 目录"
 echo ""
-echo -e "    ${BOLD}1)${RESET}  🌐  全部平台  ${DIM}(copilot + claude + codex + codebuddy)${RESET}"
-echo -e "    ${BOLD}2)${RESET}  🐙  GitHub Copilot"
-echo -e "    ${BOLD}3)${RESET}  🔶  Claude Code"
-echo -e "    ${BOLD}4)${RESET}  ✦   Codex"
-echo -e "    ${BOLD}5)${RESET}  💻  CodeBuddy  ${DIM}(固定使用中文模板，不受语言选择影响)${RESET}"
-echo -e "    ${DIM}0)  退出${RESET}"
+echo -e "  是否需要将 minipower 技能复制到平台全局技能目录？"
+echo -e "    ${BOLD}1)${RESET}  🔶  安装到 Claude Code 全局目录  ${DIM}(~/.claude/skills/)${RESET}"
+echo -e "    ${BOLD}2)${RESET}  🐙  安装到 GitHub Copilot 全局目录  ${DIM}(~/.copilot/skills/)${RESET}"
+echo -e "    ${BOLD}3)${RESET}  ✦   安装到 Codex 全局目录  ${DIM}(~/.codex/skills/)${RESET}"
+echo -e "    ${BOLD}4)${RESET}  💻  安装到 CodeBuddy 全局目录  ${DIM}(~/.codebuddy/skills/)${RESET}"
+echo -e "    ${BOLD}5)${RESET}  🌐  安装到全部平台"
+echo -e "    ${BOLD}0)${RESET}  暂不安装全局技能"
 
-ask platform_choice "请输入编号 [0-5]："
-case "$platform_choice" in
-  0) echo -e "\n  ${DIM}已退出。${RESET}\n"; exit 0 ;;
-  1) FILTER="" ;;
+ask skill_choice "请输入编号 [0-5]："
+
+FILTER=""
+case "$skill_choice" in
+  1) FILTER="claude" ;;
   2) FILTER="copilot" ;;
-  3) FILTER="claude" ;;
-  4) FILTER="codex" ;;
-  5) FILTER="codebuddy" ;;
-  *)
-    echo -e "\n  ${RED}✗${RESET}  无效选项，退出。\n"
-    exit 1 ;;
+  3) FILTER="codex" ;;
+  4) FILTER="codebuddy" ;;
+  5) FILTER="all" ;;
+  0|*) FILTER="" ;;
 esac
-fi  # end non-interactive skip for step 2
 
-# ─────────────────────────────────────────────
-# 步骤 3 — 模式（非交互模式跳过）
-# ─────────────────────────────────────────────
-if $NON_INTERACTIVE; then
-  true
-else
-print_header
-separator
-step "步骤 3 / 4  —  ⚙️   选择生成模式"
-echo ""
-echo -e "    ${BOLD}1)${RESET}  ✏️   正常生成  ${DIM}(写入文件)${RESET}"
-echo -e "    ${BOLD}2)${RESET}  🔍  ${YELLOW}Dry-run 预览${RESET}  ${DIM}(只展示变更，不写文件)${RESET}"
-echo -e "    ${DIM}0)  退出${RESET}"
-
-ask mode_choice "请输入编号 [0-2]："
-case "$mode_choice" in
-  0) echo -e "\n  ${DIM}已退出。${RESET}\n"; exit 0 ;;
-  1) DRY_RUN=false ;;
-  2) DRY_RUN=true ;;
-  *)
-    echo -e "\n  ${RED}✗${RESET}  无效选项，退出。\n"
-    exit 1 ;;
-esac
-fi  # end non-interactive skip for step 3
-
-# ─────────────────────────────────────────────
-# 步骤 4 — 安装（dry-run 时跳过，非交互模式跳过）
-# ─────────────────────────────────────────────
-if ! $DRY_RUN && ! $NON_INTERACTIVE; then
-  print_header
-  separator
-  step "步骤 4 / 4  —  📦  安装目标"
-  echo ""
-  echo -e "    ${BOLD}1)${RESET}  📁  仅生成到 _internal/agent-skills/  ${DIM}(不安装)${RESET}"
-  echo -e "    ${BOLD}2)${RESET}  🏠  安装到${BOLD}用户级${RESET}目录  ${DIM}(~/.{platform}/skills/，全局生效)${RESET}"
-  echo -e "    ${BOLD}3)${RESET}  📂  安装到${BOLD}项目级${RESET}目录  ${DIM}(你的工作目录 .{platform}/skills/)${RESET}"
-  echo -e "    ${DIM}0)  退出${RESET}"
-
-  ask install_choice "请输入编号 [0-3]："
-  case "$install_choice" in
-    0) echo -e "\n  ${DIM}已退出。${RESET}\n"; exit 0 ;;
-    1) DO_INSTALL=false ;;
-    2) DO_INSTALL=true; INSTALL_SCOPE="user" ;;
-    3) DO_INSTALL=true; INSTALL_SCOPE="project" ;;
-    *)
-      echo -e "\n  ${RED}✗${RESET}  无效选项，退出。\n"
-      exit 1 ;;
-  esac
-fi
-
-# ─────────────────────────────────────────────
-# 确认摘要（非交互模式跳过）
-# ─────────────────────────────────────────────
-if ! $NON_INTERACTIVE; then
-print_header
-separator
-echo ""
-echo -e "  ${BOLD}📋  执行摘要${RESET}"
-echo ""
-_lang_label=$( [[ -z "$LANG_SUFFIX" ]] && echo "English" || echo "中文" )
-_platform_label="${FILTER:-全部（copilot + claude + codex + codebuddy）}"
-
-if $DRY_RUN; then
-  _mode_label="${YELLOW}Dry-run（预览）${RESET}"
-  _install_label="${DIM}跳过（dry-run）${RESET}"
-else
-  _mode_label="正常生成"
-  if $DO_INSTALL; then
-    _install_label="是（${INSTALL_SCOPE} 级）"
-  else
-    _install_label="否"
-  fi
-fi
-
-echo -e "    ${DIM}🌐  语言   ${RESET}${BOLD}${_lang_label}${RESET}"
-echo -e "    ${DIM}🤖  平台   ${RESET}${BOLD}${_platform_label}${RESET}"
-echo -e "    ${DIM}⚙️   模式   ${RESET}${BOLD}$(echo -e "${_mode_label}")${RESET}"
-echo -e "    ${DIM}📦  安装   ${RESET}${BOLD}$(echo -e "${_install_label}")${RESET}"
-echo ""
-
-ask confirm "确认执行？[y/N]："
-if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
-  echo -e "\n  ${DIM}已取消。${RESET}\n"
-  exit 0
-fi
-fi  # end non-interactive skip for summary
-
-separator
-echo ""
-if $DRY_RUN; then
-  echo -e "  ${YELLOW}▶ DRY-RUN 模式 — 只预览，不写入任何文件${RESET}\n"
-fi
-
-# ─────────────────────────────────────────────
-# 写文件（dry-run 时只 diff 预览）
-# ─────────────────────────────────────────────
-write_file() {
-  local dest="$1"
-  local content="$2"
-
-  if $DRY_RUN; then
-    if [[ -f "$dest" ]]; then
-      echo -e "  ${DIM}[diff]${RESET} $dest"
-      diff <(cat "$dest") <(echo "$content") | head -30 || true
-    else
-      dry "${CYAN}[new]${RESET} $dest"
-      echo "$content" | head -10
-      echo -e "  ${DIM}...${RESET}"
-    fi
-  else
-    echo "$content" > "$dest"
-  fi
-}
-
-# ─────────────────────────────────────────────
-# 变量替换辅助
-# ─────────────────────────────────────────────
-render() {
-  # render <file> — 将文件内容做变量替换后输出到 stdout
-  sed \
-    -e "s|{{PLATFORM_NAME}}|$_r_name|g" \
-    -e "s|{{CONFIG_FILE}}|$_r_config_file|g" \
-    -e "s|{{CONFIG_HEADER}}|$_r_config_header|g" \
-    -e "s|{{SKILL_FULL}}|$_r_skill_full|g" \
-    -e "s|{{SKILL_LITE}}|$_r_skill_lite|g" \
-    -e "s|{{VERSION}}|$VERSION|g" \
-    "$1"
-}
-
-# ─────────────────────────────────────────────
-# 生成单个平台的 full + lite skill
-# 组装方式：frontmatter/{id}-{mode}[.zh].txt + body/{mode}[.zh].md
-# ─────────────────────────────────────────────
-generate_platform() {
+install_to_platform() {
   local id="$1"
-  local name="$2"
-  local config_file="$3"
-  local config_header="$4"
-  local skill_full="$5"
-  local skill_lite="$6"
-  local force_lang="${7:-}"   # 非空时强制覆盖 LANG_SUFFIX（codebuddy 用）
+  local target_dir="$2"
+  local help_msg="$3"
 
-  [[ -n "$FILTER" && "$FILTER" != "$id" ]] && return 0
+  echo -e "  ${BOLD}${MAGENTA}→${RESET} 安装 ${BOLD}minipower${RESET} 到 ${BOLD}${id}${RESET}..."
 
-  echo -e "  ${BOLD}${MAGENTA}→${RESET} ${BOLD}$id${RESET}  ${DIM}($name)${RESET}"
-
-  local lang="${force_lang:-$LANG_SUFFIX}"   # ".zh" 或 ""
-  local out_full="$OUTPUT_DIR/$id/$skill_full"
-  local out_lite="$OUTPUT_DIR/$id/$skill_lite"
-
-  $DRY_RUN || mkdir -p "$out_full/references" "$out_lite/references"
-
-  # 选择 frontmatter 文件（平台专用，优先 zh 版，否则 en 版）
-  local fm_full fm_lite
-  fm_full="$TEMPLATE_DIR/frontmatter/${id}-full${lang}.txt"
-  fm_lite="$TEMPLATE_DIR/frontmatter/${id}-lite${lang}.txt"
-  # 回退：无 zh 专用版时用英文版
-  [[ ! -f "$fm_full" ]] && fm_full="$TEMPLATE_DIR/frontmatter/${id}-full.txt"
-  [[ ! -f "$fm_lite" ]] && fm_lite="$TEMPLATE_DIR/frontmatter/${id}-lite.txt"
-
-  # 选择 body 文件
-  local body_full body_lite
-  body_full="$TEMPLATE_DIR/body/full${lang}.md"
-  body_lite="$TEMPLATE_DIR/body/lite${lang}.md"
-  # 回退：无 zh body 时用英文 body
-  [[ ! -f "$body_full" ]] && body_full="$TEMPLATE_DIR/body/full.md"
-  [[ ! -f "$body_lite" ]] && body_lite="$TEMPLATE_DIR/body/lite.md"
-
-  # 暴露渲染变量给 render()
-  _r_name="$name"
-  _r_config_file="$config_file"
-  _r_config_header="$config_header"
-  _r_skill_full="$skill_full"
-  _r_skill_lite="$skill_lite"
-
-  # Full SKILL.md = frontmatter + body
-  local full_content
-  full_content="$(cat <(render "$fm_full") <(render "$body_full"))"
-  write_file "$out_full/SKILL.md" "$full_content"
-
-  # Lite SKILL.md = frontmatter + body
-  local lite_content
-  lite_content="$(cat <(render "$fm_lite") <(render "$body_lite"))"
-  write_file "$out_lite/SKILL.md" "$lite_content"
-
-  # references（full 全套，lite 只复制 status-template）
-  if $DRY_RUN; then
-    dry "references/ → $out_full/references/"
-    dry "references/status-template.full.md → $out_full/references/status-template.md"
-    dry "references/status-template.md → $out_lite/references/"
-  else
-    cp "$TEMPLATE_DIR/references/build-plan-template.md" "$out_full/references/"
-    cp "$TEMPLATE_DIR/references/decisions-template.md"  "$out_full/references/"
-    cp "$TEMPLATE_DIR/references/status-template.full.md" "$out_full/references/status-template.md"
-    cp "$TEMPLATE_DIR/references/status-template.md"     "$out_lite/references/"
+  if [[ ! -d "$SKILL_SRC" ]]; then
+    warn "源目录 $SKILL_SRC 不存在！"
+    return 1
   fi
 
-  ok "📄  ${skill_full}/SKILL.md"
-  ok "📄  ${skill_lite}/SKILL.md"
-  ok "📁  references/ synced"
+  mkdir -p "$target_dir"
+  rm -rf "$target_dir/minipower"
+  cp -r "$SKILL_SRC" "$target_dir/"
+
+  ok "已成功安装至 $target_dir/minipower/"
+  if [[ -n "$help_msg" ]]; then
+    info "$help_msg"
+  fi
   echo ""
 }
 
-# ─────────────────────────────────────────────
-# 安装到本机 AI 平台目录
-# ─────────────────────────────────────────────
-install_skills() {
-  # project 级使用调用者目录（curl 安装时由 install.sh 导出 CALLER_DIR）
-  local project_base="${CALLER_DIR:-$PWD}"
-  if [[ "$INSTALL_SCOPE" == "project" ]]; then
-    echo -e "\n  ${BOLD}安裃到项目级${RESET}  ${DIM}$project_base/${RESET}\n"
-    local copilot_dir="$project_base/.github/skills"
-    local claude_dir="$project_base/.claude/skills"
-    local codex_dir="$project_base/.codex/skills"
-    local codebuddy_dir="$project_base/.codebuddy/skills"
-  else
-    echo -e "\n  ${BOLD}安装到用户级${RESET}  ${DIM}~/${RESET}\n"
-    local copilot_dir="$HOME/.copilot/skills"
-    local claude_dir="$HOME/.claude/skills"
-    local codex_dir="$HOME/.codex/skills"
-    local codebuddy_dir="$HOME/.codebuddy/skills"
+if [[ -n "$FILTER" ]]; then
+  copilot_dest="$HOME/.copilot/skills"
+  claude_dest="$HOME/.claude/skills"
+  codex_dest="$HOME/.codex/skills"
+  codebuddy_dest="$HOME/.codebuddy/skills"
+
+  if [[ "$FILTER" == "all" || "$FILTER" == "copilot" ]]; then
+    install_to_platform "copilot" "$copilot_dest" "请在 VS Code 中执行 Developer: Reload Window 使 Copilot skill 生效"
   fi
 
-  if [[ -z "$FILTER" || "$FILTER" == "copilot" ]]; then
-    if $DRY_RUN; then dry "copilot → $copilot_dir/"; else
-      if [[ ! -d "$OUTPUT_DIR/copilot/copilot-native-project-workflow" ]]; then
-        warn "copilot 目录未生成，跳过安装。请先运行正常生成。"
-      else
-        mkdir -p "$copilot_dir"
-        cp -r "$OUTPUT_DIR/copilot/copilot-native-project-workflow"      "$copilot_dir/"
-        cp -r "$OUTPUT_DIR/copilot/copilot-native-lite-project-workflow"  "$copilot_dir/"
-        ok "copilot   ${DIM}→ $copilot_dir/${RESET}"
-        info "请在 VS Code 中执行 ${BOLD}Developer: Reload Window${RESET} 使 Copilot skill 生效"
-      fi
-    fi
+  if [[ "$FILTER" == "all" || "$FILTER" == "claude" ]]; then
+    install_to_platform "claude" "$claude_dest" "请重启 Claude Code（或执行 /reload）使 skill 生效"
   fi
 
-  if [[ -z "$FILTER" || "$FILTER" == "claude" ]]; then
-    if $DRY_RUN; then dry "claude → $claude_dir/"; else
-      if [[ ! -d "$OUTPUT_DIR/claude/claude-native-project-workflow" ]]; then
-        warn "claude 目录未生成，跳过安装。请先运行正常生成。"
-      else
-        mkdir -p "$claude_dir"
-        cp -r "$OUTPUT_DIR/claude/claude-native-project-workflow"      "$claude_dir/"
-        cp -r "$OUTPUT_DIR/claude/claude-native-lite-project-workflow"  "$claude_dir/"
-        ok "claude    ${DIM}→ $claude_dir/${RESET}"
-        info "请重启 Claude Code（或执行 ${BOLD}/reload${RESET}）使 skill 生效"
-      fi
-    fi
+  if [[ "$FILTER" == "all" || "$FILTER" == "codex" ]]; then
+    install_to_platform "codex" "$codex_dest" "请重新打开终端或重启 Codex 使 skill 生效"
   fi
 
-  if [[ -z "$FILTER" || "$FILTER" == "codex" ]]; then
-    if $DRY_RUN; then dry "codex → $codex_dir/"; else
-      if [[ ! -d "$OUTPUT_DIR/codex/codex-native-project-workflow" ]]; then
-        warn "codex 目录未生成，跳过安装。请先运行正常生成。"
-      else
-        mkdir -p "$codex_dir"
-        cp -r "$OUTPUT_DIR/codex/codex-native-project-workflow"      "$codex_dir/"
-        cp -r "$OUTPUT_DIR/codex/codex-native-lite-project-workflow"  "$codex_dir/"
-        ok "codex     ${DIM}→ $codex_dir/${RESET}"
-        info "请重新打开终端或重启 Codex 使 skill 生效"
-      fi
-    fi
-  fi
-
-  if [[ -z "$FILTER" || "$FILTER" == "codebuddy" ]]; then
-    if $DRY_RUN; then dry "codebuddy → $codebuddy_dir/"; else
-      if [[ ! -d "$OUTPUT_DIR/codebuddy/codebuddy-native-project-workflow" ]]; then
-        warn "codebuddy 目录未生成，跳过安装。请先运行正常生成。"
-      else
-        mkdir -p "$codebuddy_dir"
-        cp -r "$OUTPUT_DIR/codebuddy/codebuddy-native-project-workflow"      "$codebuddy_dir/"
-        cp -r "$OUTPUT_DIR/codebuddy/codebuddy-native-lite-project-workflow"  "$codebuddy_dir/"
-        ok "codebuddy ${DIM}→ $codebuddy_dir/${RESET}"
-        info "请重启 CodeBuddy 插件使 skill 生效"
-      fi
-    fi
-  fi
-}
-
-# ─────────────────────────────────────────────
-# 执行生成
-# ─────────────────────────────────────────────
-generate_platform \
-  "copilot" "GitHub Copilot" \
-  ".github/copilot-instructions.md" "# Copilot Instructions" \
-  "copilot-native-project-workflow" "copilot-native-lite-project-workflow"
-
-generate_platform \
-  "claude" "Claude Code" \
-  "CLAUDE.md" "# CLAUDE.md" \
-  "claude-native-project-workflow" "claude-native-lite-project-workflow"
-
-generate_platform \
-  "codex" "Codex" \
-  "AGENTS.md" "# AGENTS.md" \
-  "codex-native-project-workflow" "codex-native-lite-project-workflow"
-
-if [[ -z "$FILTER" || "$FILTER" == "codebuddy" ]]; then
-  [[ -n "$LANG_SUFFIX" ]] || warn "CodeBuddy 固定使用中文模板，语言选择（English）对此平台不生效"
-fi
-generate_platform \
-  "codebuddy" "CodeBuddy" \
-  "CODEBUDDY.md" "# CODEBUDDY.md" \
-  "codebuddy-native-project-workflow" "codebuddy-native-lite-project-workflow" \
-  ".zh"
-
-# ─────────────────────────────────────────────
-# 安装（可选）
-# ─────────────────────────────────────────────
-$DO_INSTALL && install_skills
-
-# ─────────────────────────────────────────────
-# 安装后清理（可选）
-# ─────────────────────────────────────────────
-if $DO_INSTALL && ! $DRY_RUN; then
-  separator
-  ask cleanup_choice "是否删除 core-template/ 和 generate.sh？[y/N]："
-  if [[ "$cleanup_choice" == "y" || "$cleanup_choice" == "Y" ]]; then
-    rm -rf "$TEMPLATE_DIR"
-    rm -f "$SCRIPT_DIR/generate.sh"
-    ok "已删除 core-template/ 和 generate.sh"
-  else
-    info "已跳过，源文件保留"
+  if [[ "$FILTER" == "all" || "$FILTER" == "codebuddy" ]]; then
+    install_to_platform "codebuddy" "$codebuddy_dest" "请重启 CodeBuddy 插件使 skill 生效"
   fi
 fi
 
 # ─────────────────────────────────────────────
-# 完成
+# 清理本地临时下载文件（用户级安装且通过 curl 触发时）
 # ─────────────────────────────────────────────
+if [[ -n "$CALLER_DIR" && "$CALLER_DIR" != "$SCRIPT_DIR" ]]; then
+  # 如果是从临时目录被 install.sh 调用运行，不要提示清理，由 install.sh 自动处理。
+  true
+fi
+
 separator
-echo ""
-if $DRY_RUN; then
-  echo -e "  ${YELLOW}🔍  Dry-run 完成${RESET} — 未写入任何文件"
-  info "重新运行脚本并选择「正常生成」以实际写入"
-else
-  # 计算实际生成的平台数量
-  _platforms=()
-  [[ -z "$FILTER" || "$FILTER" == "copilot"   ]] && _platforms+=(copilot)
-  [[ -z "$FILTER" || "$FILTER" == "claude"    ]] && _platforms+=(claude)
-  [[ -z "$FILTER" || "$FILTER" == "codex"     ]] && _platforms+=(codex)
-  [[ -z "$FILTER" || "$FILTER" == "codebuddy" ]] && _platforms+=(codebuddy)
-  _pcount=${#_platforms[@]}
-  _count=$(( _pcount * 2 ))
-  _rcount=$(( _pcount * 2 ))
-  echo -e "  ${GREEN}${BOLD}🎉  完成！${RESET}  ${DIM}版本 ${VERSION} · ${_count} 个 SKILL.md + ${_rcount} 套 references/${RESET}"
-fi
-echo ""
+echo -e "\n  ${GREEN}${BOLD}🎉  恭喜，安装与配置处理完成！${RESET}\n"

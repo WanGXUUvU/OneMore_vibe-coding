@@ -1,6 +1,0 @@
----
-name: {{SKILL_LITE}}
-description: Lite {{PLATFORM_NAME}}-native project workflow. Use when the user wants a simpler fixed process, minimal docs, quick delivery loop, or a lightweight workflow for {{PLATFORM_NAME}} that still keeps task cards and hard gates.
-when_to_use: "Trigger keywords: lightweight workflow, minimal workflow, simplified process, lite mode, quick delivery, TASK-000, brainstorm, start project, continue task. Use for fast bounded execution with task cards but without full repo operating system."
-allowed-tools: Read Write Bash Grep
----

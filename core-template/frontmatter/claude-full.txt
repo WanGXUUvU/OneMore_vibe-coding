@@ -1,6 +1,0 @@
----
-name: {{SKILL_FULL}}
-description: Full {{PLATFORM_NAME}}-native project workflow. Use when the user wants {{PLATFORM_NAME}} to manage or continue work with `SPEC.md`, `DECISIONS.md`, `BUILD_PLAN.md`, `STATUS.md`, and `specs/TASK-*.md`; when a project starts from a vague idea and needs structured brainstorming; or when the task should follow `Fast`, `Standard`, or `Strict` lanes with explicit human gates.
-when_to_use: "Trigger keywords: start workflow, continue workflow, full workflow, TASK-000, TASK-001, Brainstorm Review, Plan Review, Sync Review, Verify, Review. Use when work spans multiple files, modules, or milestones and needs explicit human gates."
-allowed-tools: Read Write Bash Grep
----

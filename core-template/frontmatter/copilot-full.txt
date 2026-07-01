@@ -1,4 +1,0 @@
----
-name: {{SKILL_FULL}}
-description: Full {{PLATFORM_NAME}}-native project workflow. Use when the user wants {{PLATFORM_NAME}} to manage or continue work with `SPEC.md`, `DECISIONS.md`, `BUILD_PLAN.md`, `STATUS.md`, and `specs/TASK-*.md`; when a project starts from a vague idea and needs structured brainstorming; or when the task should follow `Fast`, `Standard`, or `Strict` lanes with explicit human gates.
----

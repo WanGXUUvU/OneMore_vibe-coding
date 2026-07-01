@@ -1,4 +1,0 @@
----
-name: {{SKILL_LITE}}
-description: Lite {{PLATFORM_NAME}}-native project workflow. Use when the user wants a simpler fixed process, minimal docs, quick delivery loop, or a lightweight workflow for {{PLATFORM_NAME}} that still keeps task cards and hard gates.
----

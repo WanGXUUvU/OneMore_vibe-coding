@@ -1,64 +1,178 @@
 ---
 name: minipower
-description: 极简项目管理工作流引导工具 (Bootstrap Tool)。用于初始化仓库配置，写入极简运行约束，并开启头脑风暴。
+description: 极简自适应项目工作流运行指南 (Runtime Guide)。用于指导 AI 在开发过程中遵守规范流程，管理任务状态与任务卡。
 ---
-# Minipower Native Project Workflow (Bootstrap Tool)
+# Minipower Native Project Workflow (Runtime Guide)
 
-## Overview（技能用途）
+本技能用于指导 AI 运行**极简自适应项目工作流**。项目初始化完成后，AI 应当在开发中严格遵守本项目工作流，通过 `STATUS.md` 和任务卡进行自我治理与状态闭环。
 
-本技能是一个 **Bootstrap（脚手架引导）工具**，用于在仓库中初始化极简自适应项目工作流。它只负责项目的初始化配置和首轮需求对齐（TASK-000），**不是长期运行时依赖**。
+## 一、 仓库文件说明与填写示范 (Repo Files & Examples)
 
-完成初始化后，后续所有对话和会话应当直接读取并遵守仓库根目录下的配置文件（`CLAUDE.md` / `AGENTS.md` / `.github/copilot-instructions.md` / `CODEBUDDY.md`）和 `STATUS.md`，实现“脱离 Skill 运行”。
+项目运行依赖以下在根目录已初始化好的文件进行开发治理：
 
-## Repo Files（仓库文件）
+### 1. 项目专属配置文件（如 `CLAUDE.md`）
+- **说明**：持久化存储极简工作流默认约束。
 
-在仓库根目录维护以下文件：
+### 2. `STATUS.md`
+- **说明**：唯一的流程状态指挥塔，记录当前任务、状态、下一步行动以及修改历史记录（Change Log）。
+- **填写示范**：
+  ```markdown
+  # STATUS
+  
+  ## Current Status
+  - **Goal**: specs/TASK-002.md
+  - **Status**: coding  # [planning | coding | waiting-review | None]
+  - **Next Action**: 编写登录接口单元测试
+  
+  ## Change Log (修改历史记录)
+  | Date | Goal / Task | Files Modified | Status | Notes |
+  | :--- | :--- | :--- | :--- | :--- |
+  | 2026-07-01 | specs/TASK-000.md | None | Completed | 完成图书笔记社区的需求对齐与头脑风暴 |
+  | 2026-07-01 | specs/TASK-001.md | src/models/Note.js, src/routes/notes.js | Completed | 实现笔记发布接口并完成基本校验 |
+  ```
 
-### 核心必备文件
-- `STATUS.md`：唯一的流程状态指挥塔，记录 Phase、Task、Gate、Allowed Now 和 Next action。
-- `specs/` 目录：存放任务卡（如有）。
+### 3. `specs/TASK-000.md`（头脑风暴与需求对齐卡）
+- **说明**：用于理清最初的需求、项目范围和验收标准。
+- **填写示范**：
+  ```markdown
+  # TASK-000: 头脑风暴与需求对齐
+  
+  ## 1. 项目名称 + 目标
+  - OneMore 图书分享平台：构建一个支持用户上传、阅读与对笔记评分的极简社区。
+  
+  ## 2. User Roles & Use Cases (用户角色与使用场景)
+  - 读书爱好者：可以上传读书笔记，并能对其他用户的笔记进行 1-5 星评分。
+  
+  ## 3. Core Pages / Flows (核心页面与主流程)
+  - 登录页 -> 主页（笔记展示瀑布流） -> 笔记详情页（评分与评论区） -> 发布笔记页。
+  
+  ## 4. In Scope (首版范围)
+  - 基于 React 的极简前端页面及发布卡片。
+  
+  ## 5. Out of Scope (明确不做)
+  - 第三方社交登录（仅使用简单账号密码）。
+  - 笔记的全文检索（首版仅按时间排序）。
+  
+  ## 6. Technical Direction & Key Dependencies (技术方向与关键依赖)
+  - React, TailwindCSS, Express, MongoDB。
+  
+  ## 7. Risks / Open Questions (风险与待确认问题)
+  - 评分是否需要防刷限制？（首版暂不限制，留待 M2 处理）。
+  
+  ## 8. Done when (最终验收标准)
+  - [x] 用户能正常发布图书笔记并在主页看到。
+  - [x] 用户可以成功对笔记评分且分数实时更新。
+  ```
 
-### 可选文件（根据项目规模动态维护）
-- `BUILD_PLAN.md`：动态路线图。记录顶层里程碑（Milestone）目标与状态，它是一个活文档，可以随着项目推进、需求变更而随时修改。
+### 4. `specs/TASK-xxx.md`（具体的开发任务卡）
+- **说明**：由 Agent 动态生成的执行卡，包含 Todo 和开发完成后回写的自审报告。
+- **填写示范**：
+  ```markdown
+  # TASK-002: 实现笔记评分接口
+  
+  ## 1. 任务背景与目标
+  - 用户在详情页需要进行评分，本任务需要实现后端的 `/api/notes/:id/rate` 接口，并更新对应笔记的平均分。
+  
+  ## 2. 需求与边界
+  - **In Scope (要做)**:
+    - [ ] 实现 POST `/api/notes/:id/rate` 接口，接受 rating (1-5) 参数。
+    - [ ] 更新数据库对应笔记的 averageRating 和 rateCount 字段。
+  - **Out of Scope (不做)**:
+    - 修改已评过的分值（首版仅允许首次评分）。
+  
+  ## 3. 实现计划 (Todo List)
+  - [ ] 在 `src/models/Note.js` 中增加 `rateCount` 和 `ratingsSum` 字段。
+  - [ ] 在 `src/routes/notes.js` 中编写 POST `/api/notes/:id/rate` 逻辑。
+  - [ ] 在 `tests/notes.test.js` 中编写接口单元测试并跑通。
+  
+  ## 4. 验证与评审 (Done when)
+  - **Verify Plan**: 运行 `npm run test tests/notes.test.js` 验证接口。
+  - **Review Report**:
+    - 改动文件：`src/models/Note.js`, `src/routes/notes.js`, `tests/notes.test.js`
+    - 验证结果：单元测试全部通过（共 3 个 Test Suites，6 个 Tests 均 Passes）。
+  ```
 
-## Persistent Project Instructions（持久化项目约束）
-
-在仓库内第一次有意义地调用本技能时，如果项目配置文件不存在，则必须主动创建它，并将以下**完备的极简运行约束**写入其中：
-
-```md
-## Workflow Defaults (Minipower)
-
-- **启动契约**：每次对话开始时，先读取本文件、`STATUS.md` 和当前任务卡（如有）。
-- **核心流程流转轨**：
-  - **普通开发**：`TASK-000 (头脑风暴) -> create-task (授权建卡) -> TASK-xxx (规划) -> start-implementation (授权开发) -> coding (编码与验证) -> Change Log 归档 -> 询问是否为下一步建卡`
-  - **微小修补**：`直接修改代码 -> 本地验证 -> STATUS.md Change Log 归档 -> 交付`
-- **状态指挥塔**：严格遵守 `STATUS.md` 中的状态与行动权限指引：
-  - `Status`：`planning` (计划中) | `coding` (编码中) | `waiting-review` (等待确认) | `None` (空闲)
-  - `Allowed Action`：`plan only` (禁止写代码) | `code and verify` (可写代码测试) | `wait only` (等待指令)
-- **修改历史登记**：每次修改通过后，必须在 `STATUS.md` 的 `Change Log` 中追加一条修改记录（包含日期、目标、修改文件、备注）。更新 `STATUS.md` 前，不得宣告任务完成。
-- **状态报告格式**：当用户提问“现在到哪了”时，必须报告：1. Goal 2. Status 3. Allowed Action 4. Blocked 5. Next Action 6. Latest Change Log.
-- **硬约束**：标准开发无任务卡绝不写代码；没有验证与自审绝不交付；每次任务完成后，必须询问用户是否为接下来的开发建卡。
-- **动态路线图**：`BUILD_PLAN.md`（如有）是动态里程碑，可随时修改和调整。
-```
-
-*如果配置文件已存在，只更新或追加 `## Workflow Defaults (Minipower)` 这一段，不要整体替换。*
+### 5. `BUILD_PLAN.md`（可选的动态路线图）
+- **说明**：**安装时不默认创建**。当进行 `TASK-000` 头脑风暴后，若确认项目规模较大、需要划分多个里程碑（Milestone）进行长期规划，**由 AI 在项目根目录下动态创建该文件**以记录顶层里程碑的目标与状态。
+- **填写示范**：
+  ```markdown
+  # BUILD_PLAN
+  
+  ## Goal
+  OneMore 图书分享平台：构建一个支持用户上传、阅读与对笔记评分的极简社区。
+  
+  ## Milestones
+  
+  ### M1: 基础笔记发布与展示
+  - Objective: 跑通核心的用户发布笔记与主页展示流程。
+  - Scope: 账号登录，发布接口，前端瀑布流列表。
+  - Deliverables: Note 数据库模型，发布路由，前端瀑布流组件。
+  - Verify: 编写单元测试并跑通发布流程。
+  - Exit: 用户能正常发布图书笔记并在主页看到。
+  
+  ### M2: 评分与社交互动
+  - Objective: 实现用户互动评分和评论机制。
+  - Scope: 评分路由，详情页评分与评论区前端组件。
+  - Deliverables: 评分接口，平均分计算与数据库更新。
+  - Verify: 跑通评分单测，验证前端评分点击后的分数变化。
+  - Exit: 用户可以成功对笔记评分且分数实时更新。
+  
+  ## Current Milestone
+  - Current milestone: M2
+  - Why this one first: M1 已于 2026-07-01 交付，本阶段重点攻克评分核心交互与算分逻辑。
+  
+  ## Readiness
+  - [x] M1: 基础笔记发布与展示
+  - [/] M2: 评分与社交互动
+  ```
 
 ---
 
-## Execution Flow（脚手架引导步骤）
+## 二、 运行流程与状态规范 (Execution Flow)
 
-本技能只负责首次运行时的初始化引导与保护分流：
+### 1. 会话启动与上下文恢复 (Startup & Restore Context)
+每次新对话启动，或者用户切换了 Agent 产品续跑开发时，AI **必须首先执行以下操作以恢复项目上下文**：
+1. **读取状态文件**：优先读取根目录下的专属配置文件（如 `CLAUDE.md`、`AGENTS.md` 等）与 `STATUS.md`。
+2. **分析与恢复上下文**：
+   - **已有活跃任务**（`STATUS.md` 中 `Status` 为 `planning`、`coding` 或 `waiting-review`，且 `Goal` 指向某个任务卡文件）：
+     - AI 必须立即读取该任务卡文件（如 `specs/TASK-xxx.md`）和 `BUILD_PLAN.md`（如有）。
+     - 自动整理当前状态，并向用户发送状态报告（报告格式见下文），提示用户：“*已从 STATUS.md 恢复上下文。当前任务为 TASK-xxx，状态为 coding。我将继续执行该任务，或等待您的指示。*”
+   - **项目处于空闲**（`STATUS.md` 中 `Status` 为 `None`，且 `Goal` 为 `None`）：
+     - 向用户提示：“*当前项目无活跃任务。请问下一个开发任务需要为您建立任务卡（TASK Card）吗？*”
+   - **全新项目首次启动**：
+     - 若 `STATUS.md` 中 `Status` 为 `planning` 且 `Goal` 指向 `specs/TASK-000.md`，且 `specs/TASK-000.md` 尚未对齐，则自动进入 **需求对齐与头脑风暴流程**。
 
-1. **幂等性校验与保护 (Re-bootstrap Protection)**：
-   - AI 首先检测仓库根目录下是否已存在 `STATUS.md`，且项目配置文件中是否已包含 `Workflow Defaults (Minipower)` 规则。
-   - 若判定已初始化，**AI 必须拒绝重新执行引导，禁止覆盖任何现有文件或历史**，并向用户提示：“`minipower` 工作流已激活。正在直接从现有的 STATUS.md 中恢复会话...”。随后立即将控制权移交，按照本地配置文件的规则继续。
-2. **检测与配置写入**：检测并创建项目配置文件，写入 `Workflow Defaults (Minipower)` 规则。
-3. **场景分流初始化**：
-   - **场景 A：全新项目（空目录或需求极度模糊）**：
-     - 从 `references/STATUS.md` 复制创建 `STATUS.md`，将 Goal 设为 `specs/TASK-000.md`，Status 设为 `planning`，Allowed Action 设为 `plan only`。
-     - 使用 `references/TASK-000.md` 作为模板初始化 `specs/TASK-000.md` 并开启需求对齐追问。
-     - 需求对齐后，将 `STATUS.md` 设为 `waiting-review` / `wait only`，并**停下等待用户确认**。
-   - **场景 B：已有项目（包含现有代码，或用户已有明确开发任务）**：
-     - 从 `references/STATUS.md` 复制创建 `STATUS.md`，将 Goal 直接设为**当前用户指派的具体开发任务**（若无则设为 `None`），Status 设为 `None`，Allowed Action 设为 `code and verify`。
-     - **跳过 `specs/TASK-000.md` 头脑风暴**，允许 AI 直接基于现有代码库动工。
-4. **交接与移交**：初始化并设置好 `STATUS.md` 后，本引导技能即告闭环。后续开发完全移交给仓库内的配置文件和状态指示器进行。
+### 2. 任务分流识别 (Task Branching)
+在日常开发中，对于用户指派的任何具体改动任务，AI 应首先识别其类型：
+- **微小修补 (Patch Flow)**：样式微调、拼写错误、单行配置等低风险修改（限制在单次修改不超过 10 行、不超过 1 个文件，且不引入新接口）。
+- **标准开发 (Standard Flow)**：新功能开发、跨文件修改或有逻辑风险的任务。
+
+### 3. 微小修补流程 (Patch Flow)
+- 无需新建任务卡，亦无 Gate 约束。
+- 直接修改代码并进行本地验证。若测试失败，必须修复代码并重新测试，直至验证通过。
+- 验证通过后，必须立即在 `STATUS.md` 的 `Change Log` 中追加一条修改记录，然后向用户宣告交付。
+
+### 4. 标准开发流程 (Standard Flow)
+标准开发遵循以下阶段，AI 在对应的 **Gate（硬关卡）** 必须主动停下等待授权：
+
+1. **需求对齐阶段 (头脑风暴)**：
+   - 编写或更新 `specs/TASK-000.md`，对齐 8 项需求。
+   - 针对缺失字段进行精准追问（每轮追问限制在 1-5 个具体问题）。
+   - **里程碑规划（如适用）**：如果在需求对齐过程中，确认项目规模较大或涉及多阶段开发，**AI 必须在此阶段主动在根目录下创建 `BUILD_PLAN.md`**，列出 Milestone 规划，指明当前正在执行的里程碑。如果项目简单，则无需创建。
+   - 需求完全对齐后，更新 `STATUS.md` 并停在 **`Brainstorm Review`** 关卡，等待用户确认并下达 `create-task` 指令。
+2. **建卡阶段**：
+   - 用户授权建卡（输入 `create-task`）后，AI 应当读取本地模板 `specs/TASK-card.md`，填充内容后在 `specs/` 目录下创建新任务卡 `specs/TASK-xxx.md`。
+   - 更新 `STATUS.md`（Goal 设为该任务卡，Status 设为 `coding`）。
+   - 停在 **`Implementation Approval`** 关卡，等待用户下达开发授权（如输入 `start-implementation` 或允许开发）。
+3. **开发与编码阶段**：
+   - 严格在任务卡规定的范围内编写代码与测试，严禁自行扩大范围。
+4. **验证与评审阶段 (Verify & Review)**：
+   - 编码完成后，运行本地验证（单元测试或服务检查）。若测试失败，必须修复代码并重新测试，直至验证通过。
+   - 在任务卡 `specs/TASK-xxx.md` 的 `Review Report` 栏中追加自审结果（包含改动文件、验证方式和结果）。
+   - 更新 `STATUS.md`（Status 设为 `waiting-review`）。
+   - 停在 **`Sync Review`** 关卡，等待用户最终 sync 验收通过。
+5. **结卡与状态归档**：
+   - 验收通过后，在 `STATUS.md` 的 `Change Log` 表格中追加记录。
+   - **更新里程碑（如适用）**：如果项目根目录下存在 `BUILD_PLAN.md`，在此步骤必须同步更新 `BUILD_PLAN.md` 中里程碑的完成情况（如勾选已完成项，修改当前活动里程碑）。
+   - 重置 `STATUS.md` 状态（Goal 清空或设为 `None`，Status 设为 `None`）。
+   - **硬约束**：完成归档后，必须主动询问用户：“*当前任务已完成并归档。请问下一个任务需要为您建立任务卡（TASK Card）吗？*”

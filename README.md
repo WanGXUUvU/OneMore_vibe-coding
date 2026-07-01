@@ -6,30 +6,36 @@
   <img src="./docs/assets/workflow-skills-overview.svg" alt="Agent Workflow Skills overview" width="100%" />
 </p>
 
-An interactive generator that builds bootstrap-first project-workflow skills for AI coding agents.
-Run one script, pick your host and language, and generate skill files that initialize a repo workflow and hand off future sessions to durable project files.
+An interactive installer that initializes the **minipower** minimalist project-workflow for AI coding agents. 
 
-## Supported Hosts
+Run one script to instantly set up lightweight project governance files in your current repository root, and optionally install the universal `minipower` capability skill globally.
 
-| Host | Full | Lite |
-|------|------|------|
-| GitHub Copilot | ✓ | ✓ |
-| Claude Code | ✓ | ✓ |
-| Codex | ✓ | ✓ |
-| CodeBuddy | ✓ (zh) | ✓ (zh) |
+## Why minipower?
 
-- **full** — bootstrap a project operating model, then continue later sessions from the full durable file set
-- **lite** — bootstrap a minimal workflow, then continue later sessions from a small durable file set
+- **Zero-Overhead by Default**: No task cards are required for trivial edits or single-line fixes. Modify the codebase directly, run tests, archive the change, and carry on.
+- **On-Demand Task Cards**: For complex tasks, the Agent automatically reads a local template (`specs/TASK-card.md`) and writes custom execution cards (`specs/TASK-xxx.md`) directly in the workspace.
+- **Session Continuation**: Instructs the Agent to inspect `STATUS.md` on startup, automatically restore active task contexts, and report progress, avoiding "memory resets" when switching chat sessions or agents.
+- **Test-Fail-Fix Feedback Loop**: Enforces an inner developer loop (write code -> run tests -> if failed, fix and retest -> if passed, archive) to keep your project green.
 
-## Product Model
+## Initialized Files (Workspace)
 
-These skills are designed as bootstrap tools, not permanent runtime dependencies.
+When running the installer in your project root, it initializes the following files:
+- **专属配置文件** (e.g. `CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, or `CODEBUDDY.md` depending on your host): Persists the structured workflow defaults. Supports appending or overwriting rules.
+- `STATUS.md`: The single source of truth for tracking current status, goals, next actions, and the modification log (`Change Log`).
+- `specs/TASK-000.md`: A template for brainstorming and requirements alignment.
+- `specs/TASK-card.md`: A template for standard development task cards.
 
-- **lite** produces a minimal continuation model centered on the host config file (`CLAUDE.md` / `AGENTS.md` / `.github/copilot-instructions.md` / `CODEBUDDY.md`), `STATUS.md`, `specs/TASK-000.md`, and `specs/TASK-001.md`
-- **full** produces a project-governance continuation model centered on the host config file, `STATUS.md`, `SPEC.md`, `DECISIONS.md`, `BUILD_PLAN.md`, and task cards
-- After bootstrap, normal new conversations should continue from those files instead of explicitly re-calling the skill
+## Supported Hosts (Global Skills)
+
+You can copy the universal `minipower` capability skill globally to any of the following hosts:
+- **Claude Code** (`~/.claude/skills/`)
+- **GitHub Copilot** (`~/.copilot/skills/`)
+- **Codex** (`~/.codex/skills/`)
+- **CodeBuddy** (`~/.codebuddy/skills/`)
 
 ## Quick Start
+
+Run this one-liner in your target project directory to start the interactive initialization:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/WanGXUUvU/OneMore_vibe-coding/main/install.sh | bash
@@ -40,12 +46,3 @@ Or clone and run manually:
 ```bash
 git clone --depth 1 https://github.com/WanGXUUvU/OneMore_vibe-coding.git && cd OneMore_vibe-coding && ./generate.sh
 ```
-
-The script walks you through four steps: language, host, generate mode, and install target.
-
-Common install targets:
-
-- Codex: `~/.codex/skills/`
-- Claude Code: `~/.claude/skills/`
-- GitHub Copilot: `~/.copilot/skills/` or `.github/skills/` inside a repo
-- CodeBuddy: `~/.codebuddy/skills/`

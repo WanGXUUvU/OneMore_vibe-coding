@@ -251,19 +251,19 @@ if [[ -n "$CFG_FILE" ]]; then
 fi
 
 # ─────────────────────────────────────────────
-# 步骤 2 — 全局 Skill 安装
+# 步骤 2 — Skill 安装
 # ─────────────────────────────────────────────
 print_header
 separator
-step "步骤 2 / 2  —  📦  安装全局 Skill 目录"
+step "步骤 2 / 2  —  📦  安装 Skill 目录"
 echo ""
-echo -e "  是否需要将 minipower 技能复制到平台全局技能目录？"
-echo -e "    ${BOLD}1)${RESET}  🔶  安装到 Claude Code 全局目录  ${DIM}(~/.claude/skills/)${RESET}"
-echo -e "    ${BOLD}2)${RESET}  🐙  安装到 GitHub Copilot 全局目录  ${DIM}(~/.copilot/skills/)${RESET}"
-echo -e "    ${BOLD}3)${RESET}  ✦   安装到 Codex 全局目录  ${DIM}(~/.codex/skills/)${RESET}"
-echo -e "    ${BOLD}4)${RESET}  💻  安装到 CodeBuddy 全局目录  ${DIM}(~/.codebuddy/skills/)${RESET}"
+echo -e "  是否需要将 minipower 技能复制到平台技能目录？"
+echo -e "    ${BOLD}1)${RESET}  🔶  安装到 Claude Code 目录"
+echo -e "    ${BOLD}2)${RESET}  🐙  安装到 GitHub Copilot 目录"
+echo -e "    ${BOLD}3)${RESET}  ✦   安装到 Codex 目录"
+echo -e "    ${BOLD}4)${RESET}  💻  安装到 CodeBuddy 目录"
 echo -e "    ${BOLD}5)${RESET}  🌐  安装到全部平台"
-echo -e "    ${BOLD}0)${RESET}  暂不安装全局技能"
+echo -e "    ${BOLD}0)${RESET}  暂不安装技能"
 
 ask skill_choice "请输入编号 [0-5]："
 
@@ -276,6 +276,32 @@ case "$skill_choice" in
   5) FILTER="all" ;;
   0|*) FILTER="" ;;
 esac
+
+# 选择安装范围 (Scope)
+scope_choice=1
+if [[ -n "$FILTER" ]]; then
+  separator
+  echo -e "  选择 Skill 的安装范围 (Scope)："
+  echo -e "    ${BOLD}1)${RESET}  🏠  用户级/全局级  ${DIM}(安装到系统用户目录，所有项目共享)${RESET}"
+  echo -e "    ${BOLD}2)${RESET}  📁  项目级  ${DIM}(安装到当前项目目录下，仅对当前项目生效)${RESET}"
+  echo ""
+  ask scope_choice "请输入编号 [1-2]，默认为 1："
+fi
+
+project_base="${CALLER_DIR:-$PWD}"
+if [[ "$scope_choice" -eq 2 ]]; then
+  copilot_dest="$project_base/.github/skills"
+  claude_dest="$project_base/.claude/skills"
+  codex_dest="$project_base/.codex/skills"
+  codebuddy_dest="$project_base/.codebuddy/skills"
+  scope_name="项目级"
+else
+  copilot_dest="$HOME/.copilot/skills"
+  claude_dest="$HOME/.claude/skills"
+  codex_dest="$HOME/.codex/skills"
+  codebuddy_dest="$HOME/.codebuddy/skills"
+  scope_name="用户级"
+fi
 
 install_to_platform() {
   local id="$1"
@@ -293,7 +319,7 @@ install_to_platform() {
   rm -rf "$target_dir/minipower"
   cp -r "$SKILL_SRC" "$target_dir/"
 
-  ok "已成功安装至 $target_dir/minipower/"
+  ok "已成功以 [${scope_name}] 安装至 $target_dir/minipower/"
   if [[ -n "$help_msg" ]]; then
     info "$help_msg"
   fi
@@ -301,11 +327,6 @@ install_to_platform() {
 }
 
 if [[ -n "$FILTER" ]]; then
-  copilot_dest="$HOME/.copilot/skills"
-  claude_dest="$HOME/.claude/skills"
-  codex_dest="$HOME/.codex/skills"
-  codebuddy_dest="$HOME/.codebuddy/skills"
-
   if [[ "$FILTER" == "all" || "$FILTER" == "copilot" ]]; then
     install_to_platform "copilot" "$copilot_dest" "请在 VS Code 中执行 Developer: Reload Window 使 Copilot skill 生效"
   fi
@@ -324,11 +345,25 @@ if [[ -n "$FILTER" ]]; then
 fi
 
 # ─────────────────────────────────────────────
-# 清理本地临时下载文件（用户级安装且通过 curl 触发时）
+# 安装后清理（如果不是从临时目录被 install.sh 调用运行，且不是开发仓库）
 # ─────────────────────────────────────────────
-if [[ -n "$CALLER_DIR" && "$CALLER_DIR" != "$SCRIPT_DIR" ]]; then
-  # 如果是从临时目录被 install.sh 调用运行，不要提示清理，由 install.sh 自动处理。
-  true
+is_dev_repo=false
+if [[ -d "$SCRIPT_DIR/.git" ]]; then
+  if git -C "$SCRIPT_DIR" remote -v 2>/dev/null | grep -q "OneMore_vibe-coding"; then
+    is_dev_repo=true
+  fi
+fi
+
+if [[ -z "$CALLER_DIR" && "$is_dev_repo" == "false" ]]; then
+  separator
+  ask cleanup_choice "是否删除本地下载的 generate.sh 和 minipower/ 目录？[y/N]："
+  if [[ "$cleanup_choice" == "y" || "$cleanup_choice" == "Y" ]]; then
+    rm -rf "$SCRIPT_DIR/minipower"
+    rm -f "$SCRIPT_DIR/generate.sh"
+    ok "已成功清理本地临时下载文件！"
+  else
+    info "已跳过，保留本地安装脚本"
+  fi
 fi
 
 separator

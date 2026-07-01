@@ -165,10 +165,10 @@ description: 极简自适应项目工作流运行指南 (Runtime Guide)。用于
    - **追问数量硬约束**：每轮对话中，AI 的精准追问必须**限制在 1-3 个具体问题**内。
    - **里程碑规划（如适用）**：如果在需求对齐过程中，确认项目规模较大或涉及多阶段开发，**AI 必须在此阶段主动在根目录下创建 `BUILD_PLAN.md`**，列出 Milestone 规划，指明当前正在执行的里程碑。如果项目简单，则无需创建。
    - 需求完全对齐后，更新 `STATUS.md` 并停在 **`Brainstorm Review`** 关卡，等待用户确认并下达 `create-task` 指令。
-2. **建卡阶段**：
+2. **建卡与开发启动阶段**：
    - 用户授权建卡（输入 `create-task`）后，AI 应当读取本地模板 `specs/TASK-card.md`，填充内容后在 `specs/` 目录下创建新任务卡 `specs/TASK-xxx.md`。
-   - 更新 `STATUS.md`（Goal 设为该任务卡，Status 设为 `coding`）。
-   - 停在 **`Implementation Approval`** 关卡，等待用户下达开发授权（如输入 `start-implementation` 或允许开发）。
+   - 更新 `STATUS.md`（Goal 设为该任务卡，Status 设为 `coding`，Next Action 设为开发编码与本地验证）。
+   - **无需停顿等待，直接进入第三阶段开始开发。**
 3. **开发与编码阶段**：
    - 严格在任务卡规定的范围内编写代码与测试，严禁自行扩大范围。
 4. **验证与评审阶段 (Verify & Review)**：

@@ -63,9 +63,7 @@ read -r -d '' WORKFLOW_RULES_TEMPLATE << 'EOF' || true
 - 如果 `STATUS.md` 中有活跃的 Goal，必须自动整理进度向用户发送状态报告，并询问如何继续，以实现无缝恢复续跑。
 
 ### 2. 核心工作流流转 (Workflow Execution)
-AI 必须根据当前任务，选择对应的流程运行：
-- **头脑风暴流 (TASK-000 Brainstorm)**:
-  `AI 开启对话 -> 交互式分步引导 (每次仅追问 1-3 个具体问题) -> 增量保存至 specs/TASK-000.md -> 对齐 8 项内容并规划里程碑 (如有) -> 提请确认并停在 Brainstorm Review 关卡 -> 等待用户授权建卡 (create-task)`
+AI 必须根据当前任务是否使用任务卡，进入对应的闭合流转流程：
 - **建卡开发流 (With Task Card)**:
   `建卡 (根据 specs/TASK-card.md 创建) -> 编码实现 -> 运行测试验证 -> [若测试失败] 修复代码并重新测试 -> [测试通过] 记录 STATUS.md Change Log 并重置状态 -> 询问用户下一个任务是否需要建立任务卡`
 - **直接执行流 (Without Task Card)**:

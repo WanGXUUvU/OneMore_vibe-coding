@@ -33,39 +33,44 @@
   <!-- 核心流转闭环展示 -->
   <g>
     <rect x="140" y="246" width="920" height="144" rx="22" fill="#F8FBFF" stroke="#D9E6FF" stroke-width="1.5"/>
-    <text x="180" y="295" fill="#1E2A42" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="700">极简自适应流转闭环 (Adaptive Feedback Loop)</text>
+    <text x="180" y="288" fill="#1E2A42" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="700">极简自适应流转闭环 (Adaptive Feedback Loop)</text>
     
-    <!-- 流程节点 1 -->
-    <rect x="180" y="315" width="130" height="42" rx="10" fill="#E8F1FF" stroke="#B0CEFF"/>
-    <text x="245" y="341" fill="#0052CC" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="700" text-anchor="middle">需求对齐 (TASK-000)</text>
+    <!-- 流程节点 1 (Blue) -->
+    <rect x="140" y="310" width="156" height="52" rx="12" fill="#F0F4FF" stroke="#BAC7E5" stroke-width="1.5"/>
+    <text x="218" y="331" fill="#1E3A8A" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="700" text-anchor="middle">需求对齐</text>
+    <text x="218" y="348" fill="#4B5563" font-family="system-ui, -apple-system, sans-serif" font-size="11" text-anchor="middle">TASK-000</text>
     
     <!-- 箭头 1 -->
-    <path d="M 320 336 L 350 336" stroke="#B0CEFF" stroke-width="2" marker-end="url(#arrow)"/>
+    <path d="M 296 336 L 326 336 M 321 331 L 326 336 L 321 341" stroke="#5B8DEF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
     
-    <!-- 流程节点 2 -->
-    <rect x="360" y="315" width="130" height="42" rx="10" fill="#EBFBF6" stroke="#A7EED8"/>
-    <text x="425" y="341" fill="#006644" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="700" text-anchor="middle">开发与编码 (coding)</text>
+    <!-- 流程节点 2 (Green) -->
+    <rect x="331" y="310" width="156" height="52" rx="12" fill="#EBFBF6" stroke="#A7EED8" stroke-width="1.5"/>
+    <text x="409" y="331" fill="#065F46" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="700" text-anchor="middle">开发与编码</text>
+    <text x="409" y="348" fill="#4B5563" font-family="system-ui, -apple-system, sans-serif" font-size="11" text-anchor="middle">coding</text>
 
     <!-- 箭头 2 -->
-    <path d="M 500 336 L 530 336" stroke="#A7EED8" stroke-width="2"/>
+    <path d="M 487 336 L 517 336 M 512 331 L 517 336 L 512 341" stroke="#33C3A1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 
-    <!-- 流程节点 3 -->
-    <rect x="540" y="315" width="130" height="42" rx="10" fill="#FFF4E5" stroke="#FFD8A8"/>
-    <text x="605" y="341" fill="#A05000" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="700" text-anchor="middle">测试与本地验证</text>
+    <!-- 流程节点 3 (Orange) -->
+    <rect x="522" y="310" width="156" height="52" rx="12" fill="#FFF4E6" stroke="#FFD8A8" stroke-width="1.5"/>
+    <text x="600" y="331" fill="#9A3412" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="700" text-anchor="middle">测试与验证</text>
+    <text x="600" y="348" fill="#4B5563" font-family="system-ui, -apple-system, sans-serif" font-size="11" text-anchor="middle">verification</text>
 
     <!-- 箭头 3 -->
-    <path d="M 680 336 L 710 336" stroke="#FFD8A8" stroke-width="2"/>
+    <path d="M 678 336 L 708 336 M 703 331 L 708 336 L 703 341" stroke="#FFA94D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 
-    <!-- 流程节点 4 -->
-    <rect x="720" y="315" width="130" height="42" rx="10" fill="#F3EAFF" stroke="#D3BFFF"/>
-    <text x="785" y="341" fill="#5224A3" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="700" text-anchor="middle">变更归档 (STATUS.md)</text>
+    <!-- 流程节点 4 (Purple) -->
+    <rect x="713" y="310" width="156" height="52" rx="12" fill="#F8F0FC" stroke="#E5DBFF" stroke-width="1.5"/>
+    <text x="791" y="331" fill="#6B21A8" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="700" text-anchor="middle">变更归档</text>
+    <text x="791" y="348" fill="#4B5563" font-family="system-ui, -apple-system, sans-serif" font-size="11" text-anchor="middle">STATUS.md</text>
 
     <!-- 箭头 4 -->
-    <path d="M 860 336 L 890 336" stroke="#D3BFFF" stroke-width="2"/>
+    <path d="M 869 336 L 899 336 M 894 331 L 899 336 L 894 341" stroke="#B197FC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 
-    <!-- 流程节点 5 -->
-    <rect x="900" y="315" width="120" height="42" rx="10" fill="#F4F5F7" stroke="#DFE1E6"/>
-    <text x="960" y="341" fill="#253858" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="700" text-anchor="middle">结卡询问 (Loop)</text>
+    <!-- 流程节点 5 (Gray) -->
+    <rect x="904" y="310" width="156" height="52" rx="12" fill="#F8F9FA" stroke="#E4E7EB" stroke-width="1.5"/>
+    <text x="982" y="331" fill="#374151" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="700" text-anchor="middle">结卡与询问</text>
+    <text x="982" y="348" fill="#6B7280" font-family="system-ui, -apple-system, sans-serif" font-size="11" text-anchor="middle">loop / next</text>
   </g>
 
   <!-- 支持的 AI 平台展示 (5大平台) -->

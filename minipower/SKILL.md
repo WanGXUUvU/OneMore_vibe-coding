@@ -1,8 +1,8 @@
 ---
-name: minipower
+name: MiniPower
 description: 极简自适应项目工作流运行指南 (Runtime Guide)。用于指导 AI 在开发过程中遵守规范流程，管理任务状态与任务卡。
 ---
-# Minipower Native Project Workflow (Runtime Guide)
+# MiniPower Native Project Workflow (Runtime Guide)
 
 本技能用于指导 AI 运行**极简自适应项目工作流**。项目初始化完成后，AI 应当在开发中严格遵守本项目工作流，通过 `STATUS.md` 和任务卡进行自我治理与状态闭环。
 

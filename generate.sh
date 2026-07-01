@@ -42,7 +42,7 @@ print_header() {
   if [[ -t 1 && -n "${TERM:-}" ]]; then clear; fi
   echo ""
   echo -e "  ${BOLD}${CYAN}+-----------------------------------------+${RESET}"
-  echo -e "  ${BOLD}${CYAN}|${RESET}      ${BOLD}minipower 一键安装与初始化器${RESET}       ${BOLD}${CYAN}|${RESET}"
+  echo -e "  ${BOLD}${CYAN}|${RESET}      ${BOLD}MiniPower 一键安装与初始化器${RESET}       ${BOLD}${CYAN}|${RESET}"
   echo -e "  ${BOLD}${CYAN}+-----------------------------------------+${RESET}"
   echo ""
 }
@@ -56,7 +56,7 @@ print_header
 # 1. 极简工作流默认约束
 read -r -d '' WORKFLOW_RULES_TEMPLATE << 'EOF' || true
 
-## Workflow Defaults (Minipower)
+## Workflow Defaults (MiniPower)
 
 ### 1. 启动与会话恢复 (Startup & Continuation)
 - 每次新对话启动或切换 Agent 时，首要读取本文件、`STATUS.md`、当前任务卡（如有）以及 `BUILD_PLAN.md`（如有）。
@@ -194,8 +194,8 @@ if [[ -n "$CFG_FILE" ]]; then
     
     case "$cfg_action" in
       1)
-        if grep -q "Workflow Defaults (Minipower)" "$target_cfg_path"; then
-          warn "文件中已包含 Minipower 规则，跳过追加。"
+        if grep -q "Workflow Defaults (MiniPower)" "$target_cfg_path"; then
+          warn "文件中已包含 MiniPower 规则，跳过追加。"
         else
           echo -e "\n$WORKFLOW_RULES_TEMPLATE" >> "$target_cfg_path"
           ok "已成功追加约束到 $CFG_FILE 末尾"
@@ -257,7 +257,7 @@ print_header
 separator
 step "步骤 2 / 2  —  安装 Skill 目录"
 echo ""
-echo -e "  是否需要将 minipower 技能复制到平台技能目录？"
+echo -e "  是否需要将 MiniPower 技能复制到平台技能目录？"
 echo -e "    ${BOLD}1)${RESET}  安装到 Claude Code 目录"
 echo -e "    ${BOLD}2)${RESET}  安装到 GitHub Copilot 目录"
 echo -e "    ${BOLD}3)${RESET}  安装到 Codex 目录"
@@ -312,7 +312,7 @@ install_to_platform() {
   local target_dir="$2"
   local help_msg="$3"
 
-  echo -e "  --> 安装 ${BOLD}minipower${RESET} 到 ${BOLD}${id}${RESET}..."
+  echo -e "  --> 安装 ${BOLD}MiniPower${RESET} 到 ${BOLD}${id}${RESET}..."
 
   if [[ ! -d "$SKILL_SRC" ]]; then
     warn "源目录 $SKILL_SRC 不存在！"

@@ -21,11 +21,8 @@
     <rect x="110" y="72" width="980" height="536" rx="28" fill="white"/>
   </g>
 
-  <text x="140" y="132" fill="#162033" font-family="system-ui, -apple-system, sans-serif" font-size="34" font-weight="700">
-    minipower 极简自适应项目工作流
-  </text>
-  <text x="140" y="168" fill="#536179" font-family="system-ui, -apple-system, sans-serif" font-size="18">
-    专为 AI 编码助手设计的轻量级项目开发与状态治理规范 (支持 5 大主流平台)
+  <text x="140" y="156" fill="#162033" font-family="system-ui, -apple-system, sans-serif" font-size="42" font-weight="800">
+    MiniPower
   </text>
 
   <rect x="140" y="208" width="920" height="4" rx="2" fill="url(#accent)"/>
@@ -33,7 +30,7 @@
   <!-- 核心流转闭环展示 -->
   <g>
     <rect x="140" y="246" width="920" height="144" rx="22" fill="#F8FBFF" stroke="#D9E6FF" stroke-width="1.5"/>
-    <text x="180" y="288" fill="#1E2A42" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="700">极简自适应流转闭环 (Adaptive Feedback Loop)</text>
+    <text x="180" y="288" fill="#1E2A42" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="700">MiniPower 极简自适应流转闭环 (Adaptive Feedback Loop)</text>
     
     <!-- 流程节点 1 (Blue) -->
     <rect x="140" y="310" width="156" height="52" rx="12" fill="#F0F4FF" stroke="#BAC7E5" stroke-width="1.5"/>

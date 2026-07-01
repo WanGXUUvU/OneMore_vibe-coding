@@ -4,11 +4,11 @@
   <img src="./docs/assets/workflow-skills-overview.svg" alt="Agent Workflow Skills overview" width="100%" />
 </p>
 
-一个一键式交互安装器，为 AI coding agent 快速初始化 **minipower** 极简项目自适应工作流。
+一个一键式交互安装器，为 AI coding agent 快速初始化 **MiniPower** 极简项目自适应工作流。
 
-只需运行一个脚本，即可交互式地为当前项目根目录初始化轻量级项目治理文件，并可选择将通用的 `minipower` 技能安装到平台全局目录中。
+只需运行一个脚本，即可交互式地为当前项目根目录初始化轻量级项目治理文件，并可选择将通用的 `MiniPower` 技能安装到平台全局目录中。
 
-## 为什么选择 minipower？
+## 为什么选择 MiniPower？
 
 - **默认零开销**：对于日常微调或单行改动，默认无需建卡。直接编写代码、执行验证、归档修改并交付，把行政开销降到最低。
 - **按需自主建卡**：当面临复杂任务时，Agent 会自动读取本地模板（`specs/TASK-card.md`）并在工作区自主写入新开发卡（`specs/TASK-xxx.md`），免除外部脚本依赖。
@@ -25,7 +25,7 @@
 
 ## 支持宿主 (全局技能目录)
 
-你可以选择将通用的 `minipower` 技能文件夹直接复制并注册到以下平台的全局技能路径中，方便在对话里随时调用：
+你可以选择将通用的 `MiniPower` 技能文件夹直接复制并注册到以下平台的全局技能路径中，方便在对话里随时调用：
 - **Claude Code** (`~/.claude/skills/`)
 - **GitHub Copilot** (`~/.copilot/skills/`)
 - **Codex** (`~/.codex/skills/`)

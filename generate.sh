@@ -20,17 +20,17 @@ RED="\033[0;31m"
 BLUE="\033[0;34m"
 MAGENTA="\033[0;35m"
 
-ok()   { echo -e "  ${GREEN}✓${RESET}  $*"; }
-info() { echo -e "  ${CYAN}ℹ${RESET}  $*"; }
-warn() { echo -e "  ${YELLOW}⚠${RESET}  $*"; }
+ok()   { echo -e "  ${GREEN}[+]${RESET}  $*"; }
+info() { echo -e "  ${CYAN}[i]${RESET}  $*"; }
+warn() { echo -e "  ${YELLOW}[!]${RESET}  $*"; }
 step() { echo -e "\n${BOLD}${BLUE}  $*${RESET}"; }
-separator() { echo -e "\n${DIM}  ────────────────────────────────────${RESET}"; }
+separator() { echo -e "\n${DIM}  ------------------------------------${RESET}"; }
 
 ask() {
   local var="$1"
   local prompt="$2"
   echo -e ""
-  printf "  ${BOLD}❯${RESET} ${prompt} "
+  printf "  ${BOLD}>${RESET} ${prompt} "
   if [ -t 0 ]; then
     read -r "$var" < /dev/tty
   else
@@ -41,9 +41,9 @@ ask() {
 print_header() {
   if [[ -t 1 && -n "${TERM:-}" ]]; then clear; fi
   echo ""
-  echo -e "  ${BOLD}${CYAN}╔══════════════════════════════════════════╗${RESET}"
-  echo -e "  ${BOLD}${CYAN}║${RESET}  ${BOLD}🛠  minipower 一键安装与初始化器${RESET}  ${DIM}v${VERSION}${RESET}  ${BOLD}${CYAN}║${RESET}"
-  echo -e "  ${BOLD}${CYAN}╚══════════════════════════════════════════╝${RESET}"
+  echo -e "  ${BOLD}${CYAN}+-----------------------------------------+${RESET}"
+  echo -e "  ${BOLD}${CYAN}|${RESET}      ${BOLD}minipower 一键安装与初始化器${RESET}       ${BOLD}${CYAN}|${RESET}"
+  echo -e "  ${BOLD}${CYAN}+-----------------------------------------+${RESET}"
   echo ""
 }
 
@@ -156,14 +156,14 @@ EOF
 # 步骤 1 — 初始化当前项目文件
 # ─────────────────────────────────────────────
 separator
-step "步骤 1 / 2  —  📁  初始化项目治理文件 (根目录)"
+step "步骤 1 / 2  —  初始化项目治理文件 (根目录)"
 echo ""
 echo -e "  选择为当前项目初始化的专属配置文件类型："
-echo -e "    ${BOLD}1)${RESET}  🔶  Claude Code  ${DIM}(CLAUDE.md)${RESET}"
-echo -e "    ${BOLD}2)${RESET}  🐙  GitHub Copilot  ${DIM}(.github/copilot-instructions.md)${RESET}"
-echo -e "    ${BOLD}3)${RESET}  ✦   Codex  ${DIM}(AGENTS.md)${RESET}"
-echo -e "    ${BOLD}4)${RESET}  💻  CodeBuddy  ${DIM}(CODEBUDDY.md)${RESET}"
-echo -e "    ${BOLD}0)${RESET}  暂不初始化项目文件  ${DIM}(仅进行全局 Skill 安装)${RESET}"
+echo -e "    ${BOLD}1)${RESET}  Claude Code  ${DIM}(CLAUDE.md)${RESET}"
+echo -e "    ${BOLD}2)${RESET}  GitHub Copilot  ${DIM}(.github/copilot-instructions.md)${RESET}"
+echo -e "    ${BOLD}3)${RESET}  Codex  ${DIM}(AGENTS.md)${RESET}"
+echo -e "    ${BOLD}4)${RESET}  CodeBuddy  ${DIM}(CODEBUDDY.md)${RESET}"
+echo -e "    ${BOLD}0)${RESET}  暂不初始化项目文件  ${DIM}(仅进行 Skill 安装)${RESET}"
 
 ask init_choice "请输入编号 [0-4]："
 
@@ -186,7 +186,7 @@ if [[ -n "$CFG_FILE" ]]; then
   mkdir -p "$(dirname "$target_cfg_path")"
   
   if [[ -f "$target_cfg_path" ]]; then
-    echo -e "\n  ${YELLOW}⚠${RESET}  检测到当前项目下已存在 ${BOLD}$CFG_FILE${RESET}"
+    warn "检测到当前项目下已存在 ${BOLD}$CFG_FILE${RESET}"
     echo -e "    ${BOLD}1)${RESET}  追加工作流约束到文件末尾 (Append)"
     echo -e "    ${BOLD}2)${RESET}  覆盖替换整个文件 (Overwrite)"
     echo -e "    ${BOLD}0)${RESET}  跳过此文件"
@@ -218,7 +218,7 @@ if [[ -n "$CFG_FILE" ]]; then
   target_status_path="$project_base/STATUS.md"
   write_status=true
   if [[ -f "$target_status_path" ]]; then
-    echo -e "\n  ${YELLOW}⚠${RESET}  检测到已存在 ${BOLD}STATUS.md${RESET}"
+    warn "检测到已存在 ${BOLD}STATUS.md${RESET}"
     echo -e "    ${BOLD}1)${RESET}  覆盖重置 STATUS.md (Overwrite)"
     echo -e "    ${BOLD}0)${RESET}  保留现有 STATUS.md"
     ask status_action "请输入编号 [0-1]："
@@ -255,14 +255,14 @@ fi
 # ─────────────────────────────────────────────
 print_header
 separator
-step "步骤 2 / 2  —  📦  安装 Skill 目录"
+step "步骤 2 / 2  —  安装 Skill 目录"
 echo ""
 echo -e "  是否需要将 minipower 技能复制到平台技能目录？"
-echo -e "    ${BOLD}1)${RESET}  🔶  安装到 Claude Code 目录"
-echo -e "    ${BOLD}2)${RESET}  🐙  安装到 GitHub Copilot 目录"
-echo -e "    ${BOLD}3)${RESET}  ✦   安装到 Codex 目录"
-echo -e "    ${BOLD}4)${RESET}  💻  安装到 CodeBuddy 目录"
-echo -e "    ${BOLD}5)${RESET}  🌐  安装到全部平台"
+echo -e "    ${BOLD}1)${RESET}  安装到 Claude Code 目录"
+echo -e "    ${BOLD}2)${RESET}  安装到 GitHub Copilot 目录"
+echo -e "    ${BOLD}3)${RESET}  安装到 Codex 目录"
+echo -e "    ${BOLD}4)${RESET}  安装到 CodeBuddy 目录"
+echo -e "    ${BOLD}5)${RESET}  安装到全部平台"
 echo -e "    ${BOLD}0)${RESET}  暂不安装技能"
 
 ask skill_choice "请输入编号 [0-5]："
@@ -282,8 +282,8 @@ scope_choice=1
 if [[ -n "$FILTER" ]]; then
   separator
   echo -e "  选择 Skill 的安装范围 (Scope)："
-  echo -e "    ${BOLD}1)${RESET}  🏠  用户级/全局级  ${DIM}(安装到系统用户目录，所有项目共享)${RESET}"
-  echo -e "    ${BOLD}2)${RESET}  📁  项目级  ${DIM}(安装到当前项目目录下，仅对当前项目生效)${RESET}"
+  echo -e "    ${BOLD}1)${RESET}  用户级/全局级  ${DIM}(安装到系统用户目录，所有项目共享)${RESET}"
+  echo -e "    ${BOLD}2)${RESET}  项目级  ${DIM}(安装到当前项目目录下，仅对当前项目生效)${RESET}"
   echo ""
   ask scope_choice "请输入编号 [1-2]，默认为 1："
 fi
@@ -308,7 +308,7 @@ install_to_platform() {
   local target_dir="$2"
   local help_msg="$3"
 
-  echo -e "  ${BOLD}${MAGENTA}→${RESET} 安装 ${BOLD}minipower${RESET} 到 ${BOLD}${id}${RESET}..."
+  echo -e "  --> 安装 ${BOLD}minipower${RESET} 到 ${BOLD}${id}${RESET}..."
 
   if [[ ! -d "$SKILL_SRC" ]]; then
     warn "源目录 $SKILL_SRC 不存在！"
@@ -367,4 +367,4 @@ if [[ -z "$CALLER_DIR" && "$is_dev_repo" == "false" ]]; then
 fi
 
 separator
-echo -e "\n  ${GREEN}${BOLD}🎉  恭喜，安装与配置处理完成！${RESET}\n"
+echo -e "\n  ${GREEN}${BOLD}恭喜，安装与配置处理完成！${RESET}\n"

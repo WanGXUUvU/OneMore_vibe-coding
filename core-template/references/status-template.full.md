@@ -6,7 +6,6 @@
 - Gate: [Brainstorm Review | Implementation Approval | Plan Review | Sync Review | None]
 - Allowed Now: [clarify only | create next task card | plan only | implementation may start | review only | sync only]
 - Milestone: [M1 | M2 | M3 | —] (BUILD_PLAN.md)
-- Lane: [Fast | Standard | Strict | —] (optional helper field)
 - Blocked: None
 - Next action: [one-line description of what happens next]
 

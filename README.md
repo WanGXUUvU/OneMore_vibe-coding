@@ -1,47 +1,45 @@
-<p align="right"><strong>EN</strong> | <a href="./README.zh-CN.md">简体中文</a></p>
-
-# Agent Workflow Skill Generator
+# Agent Workflow Skill Generator (Agent 工作流技能安装器)
 
 <p align="center">
   <img src="./docs/assets/workflow-skills-overview.svg" alt="Agent Workflow Skills overview" width="100%" />
 </p>
 
-An interactive installer that initializes the **minipower** minimalist project-workflow for AI coding agents. 
+一个一键式交互安装器，为 AI coding agent 快速初始化 **minipower** 极简项目自适应工作流。
 
-Run one script to instantly set up lightweight project governance files in your current repository root, and optionally install the universal `minipower` capability skill globally.
+只需运行一个脚本，即可交互式地为当前项目根目录初始化轻量级项目治理文件，并可选择将通用的 `minipower` 技能安装到平台全局目录中。
 
-## Why minipower?
+## 为什么选择 minipower？
 
-- **Zero-Overhead by Default**: No task cards are required for trivial edits or single-line fixes. Modify the codebase directly, run tests, archive the change, and carry on.
-- **On-Demand Task Cards**: For complex tasks, the Agent automatically reads a local template (`specs/TASK-card.md`) and writes custom execution cards (`specs/TASK-xxx.md`) directly in the workspace.
-- **Session Continuation**: Instructs the Agent to inspect `STATUS.md` on startup, automatically restore active task contexts, and report progress, avoiding "memory resets" when switching chat sessions or agents.
-- **Test-Fail-Fix Feedback Loop**: Enforces an inner developer loop (write code -> run tests -> if failed, fix and retest -> if passed, archive) to keep your project green.
+- **默认零开销**：对于日常微调或单行改动，默认无需建卡。直接编写代码、执行验证、归档修改并交付，把行政开销降到最低。
+- **按需自主建卡**：当面临复杂任务时，Agent 会自动读取本地模板（`specs/TASK-card.md`）并在工作区自主写入新开发卡（`specs/TASK-xxx.md`），免除外部脚本依赖。
+- **无缝恢复续跑**：规定 Agent 每次启动新会话或切换产品时，首要检查并读取 `STATUS.md` 以自动恢复活跃任务上下文并进行状态汇报，规避大模型“失忆”问题。
+- **测试-失败-修复环路**：在配置文件中显式规定了闭环的开发者测试循环（编写代码 -> 测试验证 -> 失败则修复重测 -> 通过则归档），确保主干分支始终处于健康状态。
 
-## Initialized Files (Workspace)
+## 项目初始化文件 (项目目录)
 
-When running the installer in your project root, it initializes the following files:
-- **专属配置文件** (e.g. `CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, or `CODEBUDDY.md` depending on your host): Persists the structured workflow defaults. Supports appending or overwriting rules.
-- `STATUS.md`: The single source of truth for tracking current status, goals, next actions, and the modification log (`Change Log`).
-- `specs/TASK-000.md`: A template for brainstorming and requirements alignment.
-- `specs/TASK-card.md`: A template for standard development task cards.
+在项目根目录下运行安装器时，会创建以下文件：
+- **专属配置文件**（根据具体宿主，生成 `CLAUDE.md`、`AGENTS.md`、`.github/copilot-instructions.md` 或 `CODEBUDDY.md`）：持久化保存结构化的工作流指令。支持追加（不破坏原有内容）或覆盖。
+- `STATUS.md`：唯一的流程状态指挥塔，记录当前任务、状态、下一步行动以及修改历史记录（Change Log）。
+- `specs/TASK-000.md`：用于头脑风暴和需求对齐的卡片模板。
+- `specs/TASK-card.md`：用于日常开发的任务卡模板。
 
-## Supported Hosts (Global Skills)
+## 支持宿主 (全局技能目录)
 
-You can copy the universal `minipower` capability skill globally to any of the following hosts:
+你可以选择将通用的 `minipower` 技能文件夹直接复制并注册到以下平台的全局技能路径中，方便在对话里随时调用：
 - **Claude Code** (`~/.claude/skills/`)
 - **GitHub Copilot** (`~/.copilot/skills/`)
 - **Codex** (`~/.codex/skills/`)
 - **CodeBuddy** (`~/.codebuddy/skills/`)
 
-## Quick Start
+## 快速开始
 
-Run this one-liner in your target project directory to start the interactive initialization:
+在需要初始化的目标项目目录下，执行以下一键安装命令：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/WanGXUUvU/OneMore_vibe-coding/main/install.sh | bash
 ```
 
-Or clone and run manually:
+或者手动克隆运行：
 
 ```bash
 git clone --depth 1 https://github.com/WanGXUUvU/OneMore_vibe-coding.git && cd OneMore_vibe-coding && ./generate.sh
